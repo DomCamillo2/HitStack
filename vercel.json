@@ -1,7 +1,5 @@
 {
   "rewrites": [
-    { "source": "/api/deezer/:path*", "destination": "https://api.deezer.com/:path*" },
-    { "source": "/api/audio/:path*", "destination": "https://cdnt-preview.dzcdn.net/:path*" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

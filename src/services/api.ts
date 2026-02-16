@@ -10,7 +10,7 @@ import type { Track } from '../store/gameStore';
 // und /api/audio/* an cdnt-preview.dzcdn.net (Preview MP3s)
 // ──────────────────────────────────────────────────────────────
 
-const DEEZER_BASE = '/api/deezer';
+const DEEZER_BASE = import.meta.env.DEV ? '/api/deezer' : 'https://api.deezer.com';
 
 // ── Schwierigkeitsgrade ──
 export type Difficulty = 'easy' | 'medium' | 'hard';
@@ -280,9 +280,11 @@ interface DeezerTrackDetail {
   };
 }
 
-// ── Preview-URL über Vite-Proxy leiten ──
+// ── Preview-URL: Im Dev über Vite-Proxy, in Produktion direkt ──
 function proxyPreviewUrl(originalUrl: string): string {
   if (!originalUrl) return '';
+  // In Produktion: Audio-URL direkt nutzen (kein CORS-Problem bei <audio>)
+  if (!import.meta.env.DEV) return originalUrl;
   try {
     const url = new URL(originalUrl);
     if (url.hostname.includes('dzcdn.net')) {
