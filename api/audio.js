@@ -1,9 +1,8 @@
 export async function GET(request) {
   const url = new URL(request.url);
-  // Alles nach /api/audio/ ist der Audio-Pfad
-  const audioPath = url.pathname.replace(/^\/api\/audio\/?/, '');
+  const path = url.searchParams.get('path') || '';
 
-  const targetUrl = 'https://cdnt-preview.dzcdn.net/' + audioPath;
+  const targetUrl = 'https://cdnt-preview.dzcdn.net/' + path;
 
   try {
     const response = await fetch(targetUrl);

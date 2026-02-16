@@ -1,12 +1,11 @@
 export async function GET(request) {
   const url = new URL(request.url);
-  // Alles nach /api/deezer/ ist der Deezer-Pfad
-  const deezerPath = url.pathname.replace(/^\/api\/deezer\/?/, '');
+  const path = url.searchParams.get('path') || '';
 
-  const targetUrl = new URL('https://api.deezer.com/' + deezerPath);
-  // Query-Parameter weiterleiten
+  const targetUrl = new URL('https://api.deezer.com/' + path);
+  // Alle Query-Params außer 'path' weiterleiten
   url.searchParams.forEach((value, key) => {
-    targetUrl.searchParams.set(key, value);
+    if (key !== 'path') targetUrl.searchParams.set(key, value);
   });
 
   try {

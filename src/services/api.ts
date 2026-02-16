@@ -6,11 +6,23 @@ import type { Track } from '../store/gameStore';
 // WICHTIG: Die /search Endpoint liefert KEIN release_date!
 // Deshalb: Erst suchen → dann für jeden Track /track/{id} abfragen.
 //
-// Vite Dev-Server leitet /api/deezer/* an api.deezer.com weiter
-// und /api/audio/* an cdnt-preview.dzcdn.net (Preview MP3s)
+// Dev: Vite-Proxy leitet /api/deezer/* an api.deezer.com
+// Prod: Vercel Function /api/deezer?path=... als CORS-Proxy
 // ──────────────────────────────────────────────────────────────
 
-const DEEZER_BASE = '/api/deezer';
+const IS_DEV = import.meta.env.DEV;
+
+// Baut die korrekte Deezer-API URL
+function deezerUrl(path: string, params?: Record<string, string>): string {
+  if (IS_DEV) {
+    // Vite proxy: /api/deezer/search?q=...
+    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+    return `/api/deezer/${path}${qs}`;
+  }
+  // Vercel Function: /api/deezer?path=search&q=...
+  const allParams = { path, ...params };
+  return `/api/deezer?${new URLSearchParams(allParams).toString()}`;
+}
 
 // ── Schwierigkeitsgrade ──
 export type Difficulty = 'easy' | 'medium' | 'hard';
@@ -286,7 +298,11 @@ function proxyPreviewUrl(originalUrl: string): string {
   try {
     const url = new URL(originalUrl);
     if (url.hostname.includes('dzcdn.net')) {
-      return `/api/audio${url.pathname}${url.search}`;
+      const audioPath = url.pathname.slice(1) + url.search; // führendes / entfernen
+      if (IS_DEV) {
+        return `/api/audio/${audioPath}`;
+      }
+      return `/api/audio?path=${encodeURIComponent(audioPath)}`;
     }
   } catch {
     // URL-Parsing fehlgeschlagen
@@ -297,7 +313,7 @@ function proxyPreviewUrl(originalUrl: string): string {
 // ── Einzelnen Track mit release_date laden ──
 async function fetchTrackDetail(id: number): Promise<Track | null> {
   try {
-    const res = await fetch(`${DEEZER_BASE}/track/${id}`);
+    const res = await fetch(deezerUrl(`track/${id}`));
     if (!res.ok) return null;
 
     const dt: DeezerTrackDetail = await res.json();
@@ -382,7 +398,7 @@ export async function fetchTracksByCategories(categoryIds: string[], difficulty:
 
 export async function fetchTracks(query: string): Promise<Track[]> {
   try {
-    const url = `${DEEZER_BASE}/search?q=${encodeURIComponent(query)}&limit=30`;
+    const url = deezerUrl('search', { q: query, limit: '30' });
     const res = await fetch(url);
     if (!res.ok) throw new Error(`Deezer API error: ${res.status}`);
 
