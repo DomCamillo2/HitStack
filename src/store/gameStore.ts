@@ -194,7 +194,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   skipToPlacing: () => {
-    const { roundNumber, currentTrack, timelines, currentPlayerIndex } = get();
+    const { currentTrack, timelines, currentPlayerIndex } = get();
     const myTimeline = timelines[currentPlayerIndex] || [];
     // Kein Bonus – direkt zur Timeline (oder bei erstem Song direkt reveal)
     const result: GuessResult = {
@@ -239,7 +239,6 @@ export const useGameStore = create<GameState>((set, get) => ({
 
     if (nextIndex === -1) {
       // Niemand mehr übrig → Song wird aufgelöst ohne Punkte
-      const { currentTrack, timelines } = get();
       const result: GuessResult = {
         titleCorrect: false,
         artistCorrect: false,
@@ -267,7 +266,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   submitGuess: (title, artist) => {
-    const { currentTrack, roundNumber, players, currentPlayerIndex } = get();
+    const { currentTrack, players, currentPlayerIndex } = get();
     if (!currentTrack) return;
 
     const titleCorrect = title.trim() ? fuzzyMatch(title, currentTrack.title) : false;

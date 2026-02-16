@@ -8,7 +8,7 @@ import { PlayButton } from './components/PlayButton';
 import { GuessForm } from './components/GuessForm';
 import { TimelinePlacement } from './components/TimelinePlacement';
 import { RevealCard } from './components/RevealCard';
-import { Loader2, Heart, Volume2, Music, Crown, Pause, Play } from 'lucide-react';
+import { Loader2, Heart, Volume2, Crown, Pause, Play } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
 
