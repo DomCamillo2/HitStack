@@ -1,29 +1,21 @@
-export async function GET(request) {
-  const url = new URL(request.url);
-  const path = url.searchParams.get('path') || '';
-
+export default async function handler(req, res) {
+  const path = req.query.path || '';
   const targetUrl = 'https://cdnt-preview.dzcdn.net/' + path;
 
   try {
     const response = await fetch(targetUrl);
     if (!response.ok) {
-      return new Response(null, { status: response.status });
+      return res.status(response.status).end();
     }
 
-    const buffer = await response.arrayBuffer();
+    const buffer = Buffer.from(await response.arrayBuffer());
 
-    return new Response(buffer, {
-      status: 200,
-      headers: {
-        'Content-Type': response.headers.get('content-type') || 'audio/mpeg',
-        'Access-Control-Allow-Origin': '*',
-        'Cache-Control': 's-maxage=86400, stale-while-revalidate=604800',
-      },
-    });
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Content-Type', response.headers.get('content-type') || 'audio/mpeg');
+    res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate=604800');
+    res.status(200).send(buffer);
   } catch (err) {
-    return new Response(JSON.stringify({ error: 'Audio proxy failed' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-    });
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.status(500).json({ error: 'Audio proxy failed' });
   }
 }

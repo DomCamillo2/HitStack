@@ -1,29 +1,22 @@
-export async function GET(request) {
-  const url = new URL(request.url);
-  const path = url.searchParams.get('path') || '';
+export default async function handler(req, res) {
+  const path = req.query.path || '';
 
   const targetUrl = new URL('https://api.deezer.com/' + path);
-  // Alle Query-Params außer 'path' weiterleiten
-  url.searchParams.forEach((value, key) => {
-    if (key !== 'path') targetUrl.searchParams.set(key, value);
-  });
+  for (const [key, value] of Object.entries(req.query)) {
+    if (key === 'path') continue;
+    if (typeof value === 'string') targetUrl.searchParams.set(key, value);
+  }
 
   try {
     const response = await fetch(targetUrl.toString());
     const data = await response.text();
 
-    return new Response(data, {
-      status: response.status,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Cache-Control': 's-maxage=300, stale-while-revalidate=600',
-      },
-    });
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
+    res.status(response.status).send(data);
   } catch (err) {
-    return new Response(JSON.stringify({ error: 'Deezer API request failed' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-    });
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.status(500).json({ error: 'Deezer API request failed' });
   }
 }
