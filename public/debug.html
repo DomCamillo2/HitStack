@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head><title>Audio Debug</title></head>
+<body style="background:#111;color:#fff;font-family:monospace;padding:20px;">
+<h2>🔊 Audio Debug</h2>
+<div id="log"></div>
+<script>
+const log = (msg) => {
+  document.getElementById('log').innerHTML += `<p>${msg}</p>`;
+  console.log(msg);
+};
+
+async function test() {
+  // 1. Test API Proxy
+  log('1️⃣ Testing /api/deezer/search...');
+  try {
+    const res = await fetch('/api/deezer/search?q=pop&limit=3');
+    log(`   Status: ${res.status}`);
+    const data = await res.json();
+    
+    if (data.error) {
+      log(`   ❌ API Error: ${JSON.stringify(data.error)}`);
+      return;
+    }
+    
+    if (!data.data || data.data.length === 0) {
+      log('   ❌ No tracks returned');
+      log(`   Response: ${JSON.stringify(data).substring(0, 300)}`);
+      return;
+    }
+
+    log(`   ✅ Got ${data.data.length} tracks`);
+    
+    const track = data.data.find(t => t.preview);
+    if (!track) {
+      log('   ❌ No track has a preview URL!');
+      data.data.forEach(t => log(`   - "${t.title}" preview: ${t.preview || 'EMPTY'}`));
+      return;
+    }
+
+    log(`   🎵 Track: ${track.title} by ${track.artist.name}`);
+    log(`   📎 Original preview URL: ${track.preview}`);
+
+    // 2. Test proxied audio URL
+    const url = new URL(track.preview);
+    const proxyUrl = `/api/audio${url.pathname}${url.search}`;
+    log(`   📎 Proxy preview URL: ${proxyUrl}`);
+
+    log('2️⃣ Testing proxy audio fetch...');
+    const audioRes = await fetch(proxyUrl);
+    log(`   Status: ${audioRes.status} | Content-Type: ${audioRes.headers.get('content-type')}`);
+    
+    if (!audioRes.ok) {
+      log(`   ❌ Audio proxy failed!`);
+      // Try direct URL
+      log('3️⃣ Testing DIRECT audio URL...');
+      const directAudio = new Audio(track.preview);
+      directAudio.volume = 0.5;
+      directAudio.play().then(() => log('   ✅ Direct audio WORKS!')).catch(e => log(`   ❌ Direct audio failed: ${e.message}`));
+      return;
+    }
+
+    log('   ✅ Audio proxy works!');
+
+    // 3. Actually play it
+    log('3️⃣ Playing via proxy...');
+    const audio = new Audio(proxyUrl);
+    audio.volume = 0.5;
+    audio.play()
+      .then(() => log('   ✅ AUDIO IS PLAYING via proxy!'))
+      .catch(e => {
+        log(`   ❌ Proxy play failed: ${e.message}`);
+        log('4️⃣ Trying direct URL...');
+        const direct = new Audio(track.preview);
+        direct.volume = 0.5;
+        direct.play()
+          .then(() => log('   ✅ DIRECT audio plays! Use direct URLs instead.'))
+          .catch(e2 => log(`   ❌ Direct also failed: ${e2.message}`));
+      });
+
+  } catch(e) {
+    log(`   ❌ Fetch error: ${e.message}`);
+  }
+}
+
+// Need user interaction for audio
+document.body.addEventListener('click', () => { test(); }, { once: true });
+log('👆 Click anywhere to start audio test...');
+</script>
+</body>
+</html>
