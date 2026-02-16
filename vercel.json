@@ -2,10 +2,6 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": null,
-  "functions": {
-    "api/deezer.js": { "runtime": "@vercel/node@3" },
-    "api/audio.js": { "runtime": "@vercel/node@3" }
-  },
   "rewrites": [
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
