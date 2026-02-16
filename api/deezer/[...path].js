@@ -1,9 +1,5 @@
 // Vercel Serverless Function – Proxy für Deezer API
-// Ersetzt den Vite Dev-Server Proxy in Produktion
-
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req, res) {
   const { path } = req.query;
   const deezerPath = Array.isArray(path) ? path.join('/') : (path || '');
 
@@ -18,12 +14,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const response = await fetch(url.toString());
     const data = await response.json();
 
-    // CORS Header
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
-
     res.status(response.status).json(data);
   } catch (err) {
+    console.error('Deezer proxy error:', err);
     res.status(500).json({ error: 'Deezer API request failed' });
   }
 }

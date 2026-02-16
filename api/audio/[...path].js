@@ -1,9 +1,5 @@
 // Vercel Serverless Function – Proxy für Deezer Audio CDN
-// Leitet Audio-Previews durch, um CORS-Probleme zu vermeiden
-
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req, res) {
   const { path } = req.query;
   const audioPath = Array.isArray(path) ? path.join('/') : (path || '');
 
@@ -16,7 +12,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(response.status).end();
     }
 
-    // Audio-Header weiterleiten
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Content-Type', response.headers.get('content-type') || 'audio/mpeg');
     res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate=604800');
@@ -24,6 +19,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const buffer = Buffer.from(await response.arrayBuffer());
     res.status(200).send(buffer);
   } catch (err) {
+    console.error('Audio proxy error:', err);
     res.status(500).json({ error: 'Audio proxy request failed' });
   }
 }

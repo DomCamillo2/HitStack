@@ -41,6 +41,7 @@ function App() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const activePlayer = players[currentPlayerIndex];
 
@@ -108,12 +109,24 @@ function App() {
   const handlePlayerSetup = async (names: string[], categories: string[], difficulty: string) => {
     setPlayers(names);
     setIsLoading(true);
+    setLoadError(null);
 
-    const tracks = await fetchTracksByCategories(categories, difficulty as Difficulty);
-    console.log(`📀 Loaded tracks (${difficulty}):`, tracks.length);
-    setTracksLoaded(tracks);
-    setIsLoading(false);
-    startGame();
+    try {
+      const tracks = await fetchTracksByCategories(categories, difficulty as Difficulty);
+      console.log(`📀 Loaded tracks (${difficulty}):`, tracks.length);
+      if (tracks.length === 0) {
+        setLoadError('Keine Songs gefunden. Bitte andere Kategorien wählen.');
+        setIsLoading(false);
+        return;
+      }
+      setTracksLoaded(tracks);
+      setIsLoading(false);
+      startGame();
+    } catch (err) {
+      console.error('Track loading failed:', err);
+      setLoadError('Songs konnten nicht geladen werden. Prüfe deine Internetverbindung.');
+      setIsLoading(false);
+    }
   };
 
   // ─── RENDER ───────────────────────────────────────────
@@ -125,6 +138,20 @@ function App() {
         <div className="h-[100dvh] bg-background flex flex-col items-center justify-center text-primary gap-3">
           <Loader2 className="animate-spin w-8 h-8" />
           <p className="text-zinc-500 text-sm">Songs werden geladen...</p>
+        </div>
+      );
+    }
+    if (loadError) {
+      return (
+        <div className="h-[100dvh] bg-background flex flex-col items-center justify-center p-6 text-center gap-4">
+          <p className="text-error text-lg font-bold">⚠️ Fehler</p>
+          <p className="text-zinc-400 text-sm">{loadError}</p>
+          <button
+            onClick={() => { setLoadError(null); }}
+            className="bg-primary hover:bg-violet-600 text-white px-8 py-3 rounded-full font-bold text-sm transition-transform active:scale-95"
+          >
+            NOCHMAL VERSUCHEN
+          </button>
         </div>
       );
     }
