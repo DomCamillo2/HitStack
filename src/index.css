@@ -25,3 +25,44 @@ body {
 ::-webkit-scrollbar {
   display: none;
 }
+
+/* ── Global Focus Styles (Tastatur-Navigation) ── */
+*:focus-visible {
+  outline: 2px solid #8b5cf6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+button:focus-visible,
+input:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid #8b5cf6;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.25);
+}
+
+/* Skip Link für Tastatur-Navigation */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #8b5cf6;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0 0 0.5rem 0.5rem;
+  font-weight: bold;
+  z-index: 100;
+  transition: top 0.2s;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* ── Bessere Touch-Zielgrößen ── */
+@media (pointer: coarse) {
+  button, [role="button"], input, select, textarea {
+    min-height: 48px;
+  }
+}

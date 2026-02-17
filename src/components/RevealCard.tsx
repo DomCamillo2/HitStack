@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import type { Track, GuessResult } from '../store/gameStore';
 import { clsx } from 'clsx';
-import { Check, X, ArrowRight } from 'lucide-react';
+import { Check, X, ArrowRight, Sparkles } from 'lucide-react';
 
 interface Props {
   track: Track;
@@ -55,7 +55,7 @@ export const RevealCard = ({ track, result, roundNumber, onNext }: Props) => {
       </div>
 
       {/* Points */}
-      <div className="text-center">
+      <div className="text-center space-y-1">
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
@@ -67,15 +67,26 @@ export const RevealCard = ({ track, result, roundNumber, onNext }: Props) => {
         >
           +{result.pointsEarned} Punkte
         </motion.div>
+        {result.jokerEarned && (
+          <motion.div
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="flex items-center justify-center gap-1.5 text-amber-400 text-sm font-bold"
+          >
+            <Sparkles className="w-4 h-4" /> JOKER VERDIENT!
+          </motion.div>
+        )}
       </div>
 
       {/* Next Button */}
       <motion.button
         whileTap={{ scale: 0.95 }}
         onClick={onNext}
-        className="bg-primary hover:bg-violet-600 text-white px-6 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors shadow-lg shadow-primary/20"
+        aria-label="Nächsten Song spielen"
+        className="bg-primary hover:bg-violet-500 active:bg-violet-700 text-white px-6 min-h-[48px] py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary/20 focus-visible:ring-4 focus-visible:ring-primary/50"
       >
-        NÄCHSTER SONG <ArrowRight className="w-4 h-4" />
+        NÄCHSTER SONG <ArrowRight className="w-4 h-4" aria-hidden="true" />
       </motion.button>
     </motion.div>
   );

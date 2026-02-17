@@ -7,13 +7,13 @@ interface Props {
 
 export const PlayButton = ({ onPlay }: Props) => {
   return (
-    <div className="h-[100dvh] bg-background flex flex-col items-center justify-center p-6">
+    <div className="h-[100dvh] bg-background flex flex-col items-center justify-center p-6" role="main" aria-label="Song abspielen">
       {/* Subtle hint text */}
       <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
-        className="text-zinc-600 text-sm uppercase tracking-[0.3em] mb-12"
+        className="text-zinc-400 text-sm uppercase tracking-[0.3em] mb-12"
       >
         Bereit?
       </motion.p>
@@ -32,6 +32,7 @@ export const PlayButton = ({ onPlay }: Props) => {
             repeat: Infinity,
             ease: 'easeInOut',
           }}
+          aria-hidden="true"
         />
 
         {/* Pulse ring 2 */}
@@ -47,6 +48,7 @@ export const PlayButton = ({ onPlay }: Props) => {
             ease: 'easeInOut',
             delay: 0.8,
           }}
+          aria-hidden="true"
         />
 
         {/* Glow background */}
@@ -61,6 +63,7 @@ export const PlayButton = ({ onPlay }: Props) => {
             repeat: Infinity,
             ease: 'easeInOut',
           }}
+          aria-hidden="true"
         />
 
         {/* Main Button */}
@@ -70,16 +73,18 @@ export const PlayButton = ({ onPlay }: Props) => {
           transition={{ type: 'spring', damping: 12, delay: 0.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={onPlay}
-          className="relative w-32 h-32 rounded-full bg-gradient-to-br from-primary via-violet-500 to-purple-700 flex items-center justify-center shadow-[0_0_60px_rgba(139,92,246,0.5)] active:shadow-[0_0_80px_rgba(139,92,246,0.7)] transition-shadow"
+          aria-label="Song abspielen"
+          className="relative w-32 h-32 rounded-full bg-gradient-to-br from-primary via-violet-500 to-purple-700 flex items-center justify-center shadow-[0_0_60px_rgba(139,92,246,0.5)] active:shadow-[0_0_80px_rgba(139,92,246,0.7)] transition-shadow focus-visible:ring-4 focus-visible:ring-white/50"
         >
           {/* Inner shine */}
-          <div className="absolute inset-1 rounded-full bg-gradient-to-br from-white/20 to-transparent" />
+          <div className="absolute inset-1 rounded-full bg-gradient-to-br from-white/20 to-transparent" aria-hidden="true" />
 
           {/* Play icon – slightly offset right for visual centering */}
           <Play
             className="w-14 h-14 text-white relative ml-1.5"
             fill="currentColor"
             strokeWidth={0}
+            aria-hidden="true"
           />
         </motion.button>
       </div>
@@ -89,9 +94,9 @@ export const PlayButton = ({ onPlay }: Props) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6 }}
-        className="text-zinc-600 text-xs mt-12 text-center"
+        className="text-zinc-400 text-xs mt-12 text-center"
       >
-        Drücke Play um den Song zu starten
+        Drücke Play, um den Song zu starten
       </motion.p>
     </div>
   );

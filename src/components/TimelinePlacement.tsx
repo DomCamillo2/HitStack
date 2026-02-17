@@ -71,15 +71,17 @@ function InsertButton({ label, onClick }: { label: string; onClick: () => void }
     <motion.button
       whileTap={{ scale: 0.97 }}
       onClick={onClick}
+      aria-label={label}
       className={clsx(
-        "w-full py-2.5 px-4 rounded-lg border-2 border-dashed border-primary/30",
-        "text-primary/60 text-xs font-mono",
+        "w-full min-h-[44px] py-2.5 px-4 rounded-lg border-2 border-dashed border-primary/40",
+        "text-primary/70 text-xs font-mono",
         "hover:border-primary hover:text-primary hover:bg-primary/5",
         "active:bg-primary/10 transition-all",
+        "focus-visible:ring-2 focus-visible:ring-primary/50",
         "flex items-center justify-center gap-1"
       )}
     >
-      <ChevronDown className="w-3 h-3" />
+      <ChevronDown className="w-3 h-3" aria-hidden="true" />
       {label}
     </motion.button>
   );

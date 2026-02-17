@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { Difficulty } from '../services/api';
 
 export interface Track {
   id: string;
@@ -17,6 +18,8 @@ export interface GuessResult {
   yearDiff: number;
   placementCorrect?: boolean;
   pointsEarned: number;
+  /** Joker verdient (Titel UND Interpret richtig) */
+  jokerEarned: boolean;
 }
 
 // Spielphasen – erweitert für Multiplayer
@@ -37,6 +40,7 @@ export interface Player {
   score: number;
   streak: number;
   lives: number;
+  jokers: number;
 }
 
 interface GameState {
@@ -47,6 +51,7 @@ interface GameState {
   pool: Track[];
   roundNumber: number;
   tracksLoaded: boolean;
+  difficulty: Difficulty;
 
   // Multiplayer
   players: Player[];
@@ -62,16 +67,18 @@ interface GameState {
   setPlayers: (names: string[]) => void;
   startGame: () => void;
   setTracksLoaded: (tracks: Track[]) => void;
+  setDifficulty: (d: Difficulty) => void;
 
   // Actions – Game Flow
   confirmPassPhone: () => void;
   pressPlay: () => void;
   goToGuessing: () => void;
-  skipToPlacing: () => void; // "Nur einordnen" → direkt zur Timeline
-  submitGuess: (title: string, artist: string) => void; // Nur Titel + Artist (Bonus)
-  skipGuess: () => void;  // "Keine Ahnung" → nächster Spieler darf stehlen
+  skipToPlacing: () => void;
+  submitGuess: (title: string, artist: string) => void;
+  skipGuess: () => void;
   placeInTimeline: (insertIndex: number) => void;
   nextRound: () => void;
+  useJoker: () => boolean;  // true wenn Joker verfügbar war
   reset: () => void;
 }
 
@@ -133,6 +140,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   pool: [],
   roundNumber: 0,
   tracksLoaded: false,
+  difficulty: 'easy' as Difficulty,
 
   players: [],
   currentPlayerIndex: 0,
@@ -150,9 +158,12 @@ export const useGameStore = create<GameState>((set, get) => ({
       score: 0,
       streak: 0,
       lives: 3,
+      jokers: 0,
     }));
     set({ players });
   },
+
+  setDifficulty: (d) => set({ difficulty: d }),
 
   setTracksLoaded: (tracks) => {
     const shuffled = [...tracks].sort(() => Math.random() - 0.5);
@@ -203,6 +214,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       yearCorrect: false,
       yearDiff: 99,
       pointsEarned: 0,
+      jokerEarned: false,
     };
     set({ lastResult: result });
 
@@ -245,6 +257,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         yearCorrect: false,
         yearDiff: 99,
         pointsEarned: 0,
+        jokerEarned: false,
       };
 
       // Song NICHT in eine Timeline einfügen (keiner hat's geschafft)
@@ -280,18 +293,25 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (titleCorrect) points += 50;
     if (artistCorrect) points += 50;
 
+    // Joker verdient wenn BEIDES richtig
+    const jokerEarned = titleCorrect && artistCorrect;
+
     const result: GuessResult = {
       titleCorrect,
       artistCorrect,
       yearCorrect: false,  // wird nicht mehr hier bewertet
       yearDiff: 99,
       pointsEarned: points,
+      jokerEarned,
     };
 
     // Bonuspunkte dem aktiven Spieler zuschreiben
     const updatedPlayers = [...players];
     const player = { ...updatedPlayers[currentPlayerIndex] };
     player.score += points;
+    if (jokerEarned) {
+      player.jokers += 1;
+    }
     if (titleCorrect || artistCorrect) {
       player.streak += 1;
     }
@@ -404,6 +424,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     pool: [],
     roundNumber: 0,
     tracksLoaded: false,
+    difficulty: 'easy' as Difficulty,
     players: [],
     currentPlayerIndex: 0,
     isOpenRound: false,
@@ -411,4 +432,18 @@ export const useGameStore = create<GameState>((set, get) => ({
     lastResult: null,
     skippedBy: [],
   }),
+
+  useJoker: () => {
+    const { players, currentPlayerIndex } = get();
+    const player = players[currentPlayerIndex];
+    if (!player || player.jokers <= 0) return false;
+
+    const updatedPlayers = [...players];
+    updatedPlayers[currentPlayerIndex] = {
+      ...player,
+      jokers: player.jokers - 1,
+    };
+    set({ players: updatedPlayers });
+    return true;
+  },
 }));
