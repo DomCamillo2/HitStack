@@ -470,7 +470,7 @@ function App() {
                       alt=""
                       className={clsx(
                         "w-full h-full object-cover transition-all duration-300",
-                        isPaused ? "brightness-50 scale-100 blur-md" : "brightness-75 scale-110 blur-md"
+                        isPaused ? "brightness-50 scale-100 blur-xl" : "brightness-75 scale-110 blur-xl"
                       )}
                     />
                   ) : (
@@ -580,10 +580,10 @@ function App() {
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={() => { stopAudio(); skipToPlacing(); }}
-                  aria-label="Song nur in der Timeline einordnen"
+                  aria-label={myTimeline.length === 0 ? "Song überspringen" : "Song nur in der Timeline einordnen"}
                   className="bg-surface hover:bg-zinc-700 active:bg-zinc-600 text-white min-h-[44px] py-2.5 rounded-xl font-bold text-sm flex items-center justify-center transition-all border border-zinc-700 hover:border-zinc-500 focus-visible:ring-4 focus-visible:ring-primary/50"
                 >
-                  NUR EINORDNEN
+                  {myTimeline.length === 0 ? 'ÜBERSPRINGEN' : 'NUR EINORDNEN'}
                 </motion.button>
 
                 {players.filter(p => p.lives > 0).length > 1 && (
