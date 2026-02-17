@@ -370,106 +370,129 @@ function App() {
 
   // ─── MAIN GAME SCREEN ─────────────────────────────────
   return (
-    <div className="h-[100dvh] flex flex-col bg-background overflow-hidden" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+    <div className="h-[100dvh] flex flex-col bg-background overflow-hidden relative" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
 
-      {/* ── COMPACT HUD ── */}
+      {/* ── Ambient Background ── */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0" aria-hidden="true">
+        <div
+          className="absolute -top-32 -right-16 w-[400px] h-[400px] rounded-full opacity-[0.035] animate-float-slow"
+          style={{ background: 'radial-gradient(circle, #8b5cf6 0%, transparent 70%)' }}
+        />
+        <div
+          className="absolute -bottom-20 -left-16 w-[350px] h-[350px] rounded-full opacity-[0.025] animate-float-slower"
+          style={{ background: 'radial-gradient(circle, #7c3aed 0%, transparent 70%)' }}
+        />
+        <div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full opacity-[0.015]"
+          style={{ background: 'radial-gradient(circle, #6d28d9 0%, transparent 55%)' }}
+        />
+      </div>
+
+      {/* ── HUD ── */}
       <div className="shrink-0 z-20">
-        {/* Top Bar: Logo (center) + Round + Pause */}
-        <div className="px-3 pt-2 pb-1 flex items-center justify-between">
-          {/* Left: round info */}
-          <div className="flex items-center gap-1.5 min-w-[60px]">
-            <span className="text-zinc-600 text-[10px] font-mono tracking-wide">Song {roundNumber}</span>
-            {isOpenRound && (
-              <span className="text-amber-400/80 text-[9px] font-bold uppercase">OFFEN</span>
-            )}
-          </div>
-
-          {/* Center: HITSTACK Logo – clickable to go home */}
-          <button
-            onClick={handleGoHome}
-            aria-label="Zurück zum Startbildschirm"
-            className="flex items-center group focus-visible:ring-2 focus-visible:ring-primary/50 rounded-md px-1.5 py-0.5 transition-colors hover:bg-white/5 active:bg-white/10"
-          >
-            <span className="text-sm font-black text-white italic tracking-tight group-hover:text-primary/90 transition-colors">
-              HIT<span className="text-primary">STACK</span>
-            </span>
-          </button>
-
-          {/* Right: Pause/Play or spacer */}
-          <div className="min-w-[60px] flex justify-end">
-          {(phase === 'listening' || phase === 'guessing') && (
-            <motion.button
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={togglePause}
-              aria-label={isPaused ? 'Musik abspielen' : 'Musik pausieren'}
-              className="flex items-center gap-1 px-2 min-h-[26px] py-0.5 rounded-full text-[10px] font-medium transition-colors focus-visible:ring-2 bg-white/5 border border-white/10 text-zinc-500 hover:text-zinc-300 hover:bg-white/10 focus-visible:ring-primary/50"
+        {/* Glass HUD Card */}
+        <div className="mx-2.5 mt-2 rounded-2xl bg-white/[0.03] backdrop-blur-xl border border-white/[0.06] shadow-lg shadow-black/10 overflow-hidden">
+          {/* Top Row: Logo + Round + Pause */}
+          <div className="px-3.5 pt-2.5 pb-1.5 flex items-center justify-between">
+            {/* Left: HITSTACK Logo */}
+            <button
+              onClick={handleGoHome}
+              aria-label="Zurück zum Startbildschirm"
+              className="flex items-center group focus-visible:ring-2 focus-visible:ring-primary/50 rounded-lg px-1 py-0.5 transition-colors hover:bg-white/5 active:bg-white/10"
             >
-              {isPaused ? (
-                <><Play className="w-3 h-3" aria-hidden="true" /> Play</>
-              ) : (
-                <><Pause className="w-3 h-3" aria-hidden="true" /> Pause</>
-              )}
-            </motion.button>
-          )}
-          </div>
-        </div>
+              <span className="text-sm font-black text-white italic tracking-tight group-hover:text-primary/90 transition-colors">
+                HIT<span className="text-primary">STACK</span>
+              </span>
+            </button>
 
-        {/* Active Player Card */}
-        {activePlayer && (
-          <div className="px-3 pb-1">
-            <div className="flex items-center justify-between bg-surface/50 rounded-lg px-2.5 py-1.5 border border-white/5">
-              <div className="flex items-center gap-1.5">
-                <div className="w-5 h-5 rounded-full bg-primary/15 text-primary text-[10px] font-bold flex items-center justify-center">
+            {/* Center: Round info */}
+            <div className="flex items-center gap-2">
+              <span className="text-zinc-400 text-xs font-mono tracking-wide">Song {roundNumber}</span>
+              {isOpenRound && (
+                <span className="px-1.5 py-0.5 rounded-md bg-amber-400/10 text-amber-400 text-[10px] font-bold uppercase border border-amber-400/20">OFFEN</span>
+              )}
+            </div>
+
+            {/* Right: Pause/Play or spacer */}
+            <div className="min-w-[44px] flex justify-end">
+              {(phase === 'listening' || phase === 'guessing') && (
+                <motion.button
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={togglePause}
+                  aria-label={isPaused ? 'Musik abspielen' : 'Musik pausieren'}
+                  className="flex items-center gap-1.5 px-2.5 min-h-[36px] py-1 rounded-full text-xs font-bold transition-colors focus-visible:ring-2 bg-white/[0.06] border border-white/[0.08] text-zinc-400 hover:text-zinc-200 hover:bg-white/10 focus-visible:ring-primary/50"
+                >
+                  {isPaused ? (
+                    <><Play className="w-3.5 h-3.5" aria-hidden="true" /> Play</>
+                  ) : (
+                    <><Pause className="w-3.5 h-3.5" aria-hidden="true" /> Pause</>
+                  )}
+                </motion.button>
+              )}
+            </div>
+          </div>
+
+          {/* Active Player Row */}
+          {activePlayer && (
+            <div className="px-3.5 pb-2.5 flex items-center justify-between border-t border-white/[0.04] pt-2">
+              {/* Left: Avatar + Name + Streak */}
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-primary/15 text-primary text-xs font-bold flex items-center justify-center ring-2 ring-primary/20">
                   {activePlayer.name.charAt(0).toUpperCase()}
                 </div>
-                <span className="text-white font-bold text-xs">{activePlayer.name}</span>
+                <div className="flex flex-col">
+                  <span className="text-white font-bold text-sm leading-tight">{activePlayer.name}</span>
+                  {activePlayer.streak > 1 && (
+                    <span className="text-[10px] font-bold text-primary/70">{activePlayer.streak}× Streak</span>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                {activePlayer.streak > 1 && (
-                  <span className="text-[10px] font-bold text-primary/80">{activePlayer.streak}x</span>
-                )}
+
+              {/* Right: Stats */}
+              <div className="flex items-center gap-3">
                 {activePlayer.jokers > 0 && (
-                  <span className="text-[10px] font-bold text-amber-400/80" title={`${activePlayer.jokers} Joker`}>
-                    <Sparkles className="w-3 h-3 inline mr-0.5" />{activePlayer.jokers}
-                  </span>
+                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-400/10 border border-amber-400/15" title={`${activePlayer.jokers} Joker`}>
+                    <Sparkles className="w-3 h-3 text-amber-400" />
+                    <span className="text-xs font-bold text-amber-400">{activePlayer.jokers}</span>
+                  </div>
                 )}
-                <span className="text-white font-mono font-bold text-sm tabular-nums">{activePlayer.score}</span>
+                <span className="text-white font-mono font-black text-lg tabular-nums tracking-tight">{activePlayer.score}</span>
                 <div className="flex gap-0.5">
                   {Array.from({ length: 3 }).map((_, i) => (
                     <Heart
                       key={i}
                       className={clsx(
-                        'w-2.5 h-2.5',
-                        i < activePlayer.lives ? 'text-error fill-error' : 'text-zinc-700/50'
+                        'w-3.5 h-3.5 transition-colors',
+                        i < activePlayer.lives ? 'text-error fill-error' : 'text-zinc-700/40'
                       )}
                     />
                   ))}
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        {/* All Players Mini-Bar */}
+        {/* All Players Strip */}
         {players.length > 1 && (
-          <div className="px-3 pb-1 flex gap-1 overflow-x-auto scrollbar-hide">
+          <div className="px-3 pt-2 pb-1 flex gap-1.5 overflow-x-auto scrollbar-hide">
             {players.map((p, i) => (
               <div
                 key={p.name}
                 className={clsx(
-                  "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] shrink-0 transition-colors",
+                  "flex items-center gap-1 px-2.5 py-1 rounded-full text-xs shrink-0 transition-all",
                   i === currentPlayerIndex
-                    ? "bg-primary/10 text-primary font-bold"
+                    ? "bg-primary/15 text-primary font-bold ring-1 ring-primary/25"
                     : p.lives <= 0
-                    ? "bg-zinc-800/20 text-zinc-700 line-through"
-                    : "bg-white/5 text-zinc-600"
+                    ? "bg-zinc-800/30 text-zinc-600 line-through"
+                    : "bg-white/[0.04] text-zinc-500"
                 )}
               >
-                <span className="truncate max-w-[40px]">{p.name}</span>
-                <span className="font-mono">{p.score}</span>
-                {p.lives <= 0 && <span className="text-[9px] text-zinc-700">OUT</span>}
+                <span className="truncate max-w-[56px]">{p.name}</span>
+                <span className="font-mono font-bold">{p.score}</span>
+                {p.lives <= 0 && <span className="text-[10px] text-zinc-600 ml-0.5">OUT</span>}
               </div>
             ))}
           </div>
@@ -477,7 +500,7 @@ function App() {
       </div>
 
       {/* MAIN CONTENT AREA */}
-      <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center px-3 py-2 pb-4">
+      <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center px-3 py-2 pb-4 relative z-10">
         <AnimatePresence mode="wait">
 
           {/* ── LISTENING PHASE ── */}
@@ -750,15 +773,15 @@ function App() {
 
       {/* TIMELINE PREVIEW – zeigt die Timeline des aktiven Spielers */}
       {myTimeline.length > 0 && phase !== 'placing' && (
-        <div className="shrink-0 border-t border-white/5 bg-surface/30 px-2 py-1.5">
-          <div className="text-zinc-600 text-[9px] font-mono uppercase tracking-wider mb-1 text-center">
+        <div className="shrink-0 border-t border-white/[0.06] bg-white/[0.02] backdrop-blur-sm px-2 py-1.5 relative z-10">
+          <div className="text-zinc-500 text-[10px] font-mono uppercase tracking-wider mb-1 text-center">
             {activePlayer?.name ?? 'Timeline'} · {myTimeline.length}
           </div>
           <div className="flex gap-1.5 overflow-x-auto pb-0.5 justify-center scrollbar-hide">
             {myTimeline.map((t) => (
               <div key={t.id} className="flex flex-col items-center shrink-0">
-                <img src={t.coverUrl} alt={t.title} className="w-7 h-7 rounded object-cover border border-white/5" loading="lazy" />
-                <span className="text-primary/70 text-[8px] font-mono mt-0.5">{t.year}</span>
+                <img src={t.coverUrl} alt={t.title} className="w-8 h-8 rounded-md object-cover border border-white/[0.06] shadow-sm" loading="lazy" />
+                <span className="text-primary/80 text-[9px] font-mono mt-0.5">{t.year}</span>
               </div>
             ))}
           </div>

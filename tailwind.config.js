@@ -17,6 +17,8 @@ export default {
       animation: {
         'shake': 'shake 0.4s cubic-bezier(.36,.07,.19,.97) both',
         'pop': 'pop 0.3s ease-out forwards',
+        'float-slow': 'float-slow 20s ease-in-out infinite',
+        'float-slower': 'float-slower 25s ease-in-out infinite',
       },
       keyframes: {
         shake: {
@@ -28,7 +30,15 @@ export default {
         pop: {
           '0%': { transform: 'scale(0.8)', opacity: 0 },
           '100%': { transform: 'scale(1)', opacity: 1 }
-        }
+        },
+        'float-slow': {
+          '0%, 100%': { transform: 'translate(0, 0)' },
+          '50%': { transform: 'translate(15px, 10px)' },
+        },
+        'float-slower': {
+          '0%, 100%': { transform: 'translate(0, 0)' },
+          '50%': { transform: 'translate(-10px, -15px)' },
+        },
       }
     },
   },
