@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, X, Users, ChevronRight, Info, Check } from 'lucide-react';
+import { Plus, X, ChevronRight, Info, Check, Music, Zap } from 'lucide-react';
 import { MUSIC_CATEGORIES, DIFFICULTY_LEVELS } from '../services/api';
 import type { Difficulty } from '../services/api';
 
@@ -24,51 +24,6 @@ function savePreferences(names: string[], categories: string[], difficulty: Diff
   } catch { /* ignore */ }
 }
 
-// Fortschrittsanzeige
-const STEPS = [
-  { key: 'players', label: 'Spielende' },
-  { key: 'categories', label: 'Musik' },
-  { key: 'difficulty', label: 'Level' },
-] as const;
-
-function ProgressIndicator({ currentStep }: { currentStep: string }) {
-  const currentIndex = STEPS.findIndex(s => s.key === currentStep);
-
-  return (
-    <nav aria-label="Fortschritt im Setup" className="flex items-center justify-center gap-2 mb-4">
-      {STEPS.map((step, i) => (
-        <div key={step.key} className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5">
-            <div
-              className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${
-                i < currentIndex
-                  ? 'bg-success/20 text-success'
-                  : i === currentIndex
-                  ? 'bg-primary/20 text-primary'
-                  : 'bg-white/5 text-zinc-600'
-              }`}
-              aria-current={i === currentIndex ? 'step' : undefined}
-            >
-              {i < currentIndex ? <Check className="w-3 h-3" /> : i + 1}
-            </div>
-            <span className={`text-[10px] font-medium hidden sm:inline ${
-              i <= currentIndex ? 'text-zinc-300' : 'text-zinc-600'
-            }`}>
-              {step.label}
-            </span>
-          </div>
-          {i < STEPS.length - 1 && (
-            <div className={`w-6 h-px ${
-              i < currentIndex ? 'bg-success/30' : 'bg-white/10'
-            }`} />
-          )}
-        </div>
-      ))}
-      <span className="sr-only">Schritt {currentIndex + 1} von {STEPS.length}</span>
-    </nav>
-  );
-}
-
 // Kategorie-Beschreibungen
 const CATEGORY_DESCRIPTIONS: Record<string, string> = {
   '2000er': 'Die größten Hits aus den 2000ern',
@@ -79,12 +34,27 @@ const CATEGORY_DESCRIPTIONS: Record<string, string> = {
   'rock': 'Rock-Klassiker von Queen bis Måneskin',
 };
 
+// Step progress bar (compact, only shown from step 2+)
+function StepBar({ current, total }: { current: number; total: number }) {
+  return (
+    <div className="flex gap-1.5 w-full max-w-[120px] mx-auto mb-5">
+      {Array.from({ length: total }).map((_, i) => (
+        <div
+          key={i}
+          className={`h-1 rounded-full flex-1 transition-colors duration-300 ${
+            i <= current ? 'bg-primary' : 'bg-white/10'
+          }`}
+        />
+      ))}
+    </div>
+  );
+}
+
 export const PlayerSetup = ({ onStart, onShowHowToPlay }: Props) => {
   const [step, setStep] = useState<'players' | 'categories' | 'difficulty'>('players');
   const [names, setNames] = useState<string[]>(['', '']);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(['2000er']);
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
-  const [showIntro, setShowIntro] = useState(true);
   const [hasSavedPrefs, setHasSavedPrefs] = useState(false);
 
   // Gespeicherte Präferenzen laden
@@ -141,163 +111,165 @@ export const PlayerSetup = ({ onStart, onShowHowToPlay }: Props) => {
     }
   };
 
+  const stepIndex = step === 'players' ? 0 : step === 'categories' ? 1 : 2;
+
   return (
     <div className="h-[100dvh] bg-background flex flex-col items-center justify-center p-6 overflow-y-auto" role="main">
-      {/* Logo + Info Button */}
-      <motion.div
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="text-center mb-4 shrink-0"
-      >
-        <h1 className="text-3xl font-black text-white italic">
-          HIT<span className="text-primary">STACK</span>
-        </h1>
-        {onShowHowToPlay && (
-          <button
-            onClick={onShowHowToPlay}
-            className="mt-2 inline-flex items-center gap-1 px-3 min-h-[32px] py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 text-zinc-500 hover:text-zinc-300 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-primary/50"
-            aria-label="Spielanleitung anzeigen"
-          >
-            <Info className="w-3 h-3" aria-hidden="true" />
-            Wie geht's?
-          </button>
-        )}
-      </motion.div>
-
-      {/* Spielanleitung (Intro) */}
-      <AnimatePresence>
-        {showIntro && step === 'players' && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="w-full max-w-sm overflow-hidden mb-4"
-          >
-            <div className="bg-surface border border-white/5 rounded-xl p-3.5 text-center">
-              <p className="text-zinc-400 text-xs leading-relaxed">
-                Hört euch Songs an, ratet Titel &amp; Interpret und ordnet sie chronologisch in eure Timeline ein.
-              </p>
-              <button
-                onClick={() => setShowIntro(false)}
-                className="mt-2 text-zinc-600 text-xs hover:text-zinc-400 transition-colors min-h-[32px]"
-                aria-label="Spielanleitung ausblenden"
-              >
-                Verstanden
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Fortschrittsanzeige */}
-      <ProgressIndicator currentStep={step} />
 
       <AnimatePresence mode="wait">
-        {/* ── STEP 1: Spielende ── */}
+        {/* ── STEP 1: HERO LANDING + PLAYERS ── */}
         {step === 'players' && (
           <motion.div
             key="players"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0, x: -40 }}
-            className="w-full max-w-sm flex flex-col gap-3 px-2"
-            role="group"
-            aria-labelledby="step-players-heading"
+            className="w-full max-w-sm flex flex-col items-center px-2"
           >
-            <div className="flex items-center justify-center gap-1.5 text-zinc-400 text-xs mb-2" id="step-players-heading">
-              <Users className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Wer spielt mit?</span>
-            </div>
-
-            {names.map((name, i) => (
+            {/* Hero Section */}
+            <motion.div
+              initial={{ y: -30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ type: 'spring', damping: 20 }}
+              className="text-center mb-6"
+            >
+              {/* Decorative icon */}
               <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="flex items-center gap-2"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', damping: 10, delay: 0.1 }}
+                className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto mb-4"
               >
-                <div
-                  className="w-7 h-7 rounded-full bg-primary/10 text-primary text-[10px] font-bold flex items-center justify-center shrink-0"
-                  aria-hidden="true"
-                >
-                  {i + 1}
-                </div>
-                <div className="flex-1">
-                  <label
-                    htmlFor={`player-${i}`}
-                    className="sr-only"
-                  >
-                    Spieler:in {i + 1}
-                  </label>
-                  <input
-                    id={`player-${i}`}
-                    type="text"
-                    placeholder={`Spieler:in ${i + 1}`}
-                    value={name}
-                    onChange={(e) => updateName(i, e.target.value)}
-                    autoFocus={i === 0}
-                    maxLength={20}
-                    aria-required={i < 2 ? true : undefined}
-                    className="w-full bg-surface border border-white/10 rounded-lg px-3 py-2.5 text-white placeholder-zinc-600 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 transition-colors text-sm"
-                  />
-                </div>
-                {names.length > 2 && (
-                  <motion.button
-                    type="button"
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => removePlayer(i)}
-                    aria-label={`Spieler:in ${i + 1} entfernen`}
-                    className="w-8 h-8 rounded-full bg-white/5 text-zinc-600 hover:text-error hover:bg-error/10 flex items-center justify-center transition-colors shrink-0"
-                  >
-                    <X className="w-3.5 h-3.5" aria-hidden="true" />
-                  </motion.button>
-                )}
+                <Music className="w-7 h-7 text-primary" />
               </motion.div>
-            ))}
 
-            {names.length < 8 && (
-              <motion.button
-                type="button"
-                whileTap={{ scale: 0.97 }}
-                onClick={addPlayer}
-                aria-label="Weitere:n Spieler:in hinzufügen"
-                className="w-full min-h-[40px] py-2.5 rounded-lg border border-dashed border-white/10 text-zinc-500 text-xs font-medium hover:border-primary/30 hover:text-primary/70 focus-visible:border-primary focus-visible:text-primary transition-colors flex items-center justify-center gap-1.5"
+              <h1 className="text-4xl font-black text-white italic tracking-tight">
+                HIT<span className="text-primary">STACK</span>
+              </h1>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="text-zinc-500 text-sm mt-2 max-w-[240px] mx-auto leading-relaxed"
               >
-                <Plus className="w-3.5 h-3.5" aria-hidden="true" />
-                Hinzufügen
+                Erkennt den Song, ratet den Titel und baut eure Timeline!
+              </motion.p>
+
+              {/* How-to-play link */}
+              {onShowHowToPlay && (
+                <motion.button
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  onClick={onShowHowToPlay}
+                  className="mt-3 inline-flex items-center gap-1 text-zinc-600 hover:text-zinc-400 text-xs transition-colors focus-visible:ring-2 focus-visible:ring-primary/50 rounded"
+                  aria-label="Spielanleitung anzeigen"
+                >
+                  <Info className="w-3 h-3" aria-hidden="true" />
+                  Wie funktioniert's?
+                </motion.button>
+              )}
+            </motion.div>
+
+            {/* Quick Start for returning users */}
+            {hasSavedPrefs && (
+              <motion.button
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleQuickStart}
+                className="w-full mb-4 bg-primary hover:bg-violet-500 active:bg-violet-700 text-white min-h-[48px] py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all focus-visible:ring-4 focus-visible:ring-primary/50"
+                aria-label="Sofort mit letzten Einstellungen starten"
+              >
+                <Zap className="w-4 h-4" aria-hidden="true" />
+                WEITER SPIELEN
               </motion.button>
             )}
 
+            {/* Divider for returning users */}
+            {hasSavedPrefs && (
+              <div className="w-full flex items-center gap-3 mb-4">
+                <div className="flex-1 h-px bg-white/5" />
+                <span className="text-zinc-600 text-[10px] uppercase tracking-wider">oder neues Spiel</span>
+                <div className="flex-1 h-px bg-white/5" />
+              </div>
+            )}
+
+            {/* Player Inputs */}
+            <div className="w-full flex flex-col gap-2.5" role="group" aria-label="Spieler:innen eingeben">
+              {names.map((name, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 + i * 0.05 }}
+                  className="flex items-center gap-2"
+                >
+                  <div className="flex-1">
+                    <label htmlFor={`player-${i}`} className="sr-only">Spieler:in {i + 1}</label>
+                    <input
+                      id={`player-${i}`}
+                      type="text"
+                      placeholder={`Spieler:in ${i + 1}`}
+                      value={name}
+                      onChange={(e) => updateName(i, e.target.value)}
+                      autoFocus={i === 0 && !hasSavedPrefs}
+                      maxLength={20}
+                      aria-required={i < 2 ? true : undefined}
+                      className="w-full bg-surface border border-white/10 rounded-lg px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 transition-colors text-sm"
+                    />
+                  </div>
+                  {names.length > 2 && (
+                    <motion.button
+                      type="button"
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => removePlayer(i)}
+                      aria-label={`Spieler:in ${i + 1} entfernen`}
+                      className="w-8 h-8 rounded-full bg-white/5 text-zinc-600 hover:text-error hover:bg-error/10 flex items-center justify-center transition-colors shrink-0"
+                    >
+                      <X className="w-3.5 h-3.5" aria-hidden="true" />
+                    </motion.button>
+                  )}
+                </motion.div>
+              ))}
+
+              {names.length < 8 && (
+                <button
+                  type="button"
+                  onClick={addPlayer}
+                  aria-label="Weitere:n Spieler:in hinzufügen"
+                  className="w-full min-h-[40px] py-2 rounded-lg border border-dashed border-white/10 text-zinc-600 text-xs font-medium hover:border-primary/30 hover:text-primary/70 transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <Plus className="w-3.5 h-3.5" aria-hidden="true" />
+                  Hinzufügen
+                </button>
+              )}
+            </div>
+
+            {/* Continue */}
             <motion.button
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
               whileTap={{ scale: 0.95 }}
               disabled={!canContinue}
               onClick={() => setStep('categories')}
               aria-label="Weiter zur Musikauswahl"
-              className="mt-3 bg-primary hover:bg-violet-500 active:bg-violet-700 disabled:bg-zinc-800 disabled:text-zinc-600 disabled:cursor-not-allowed text-white px-6 min-h-[44px] py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-1.5 transition-all focus-visible:ring-4 focus-visible:ring-primary/50"
+              className={`w-full mt-4 min-h-[48px] py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-1.5 transition-all focus-visible:ring-4 focus-visible:ring-primary/50 ${
+                hasSavedPrefs
+                  ? 'bg-surface border border-white/10 text-zinc-300 hover:bg-zinc-800 disabled:text-zinc-700 disabled:cursor-not-allowed'
+                  : 'bg-primary hover:bg-violet-500 active:bg-violet-700 text-white disabled:bg-zinc-800 disabled:text-zinc-600 disabled:cursor-not-allowed'
+              }`}
             >
-              WEITER
+              {hasSavedPrefs ? 'NEUES SPIEL EINRICHTEN' : 'WEITER'}
               <ChevronRight className="w-4 h-4" aria-hidden="true" />
             </motion.button>
 
-            {!canContinue && (
-              <p className="text-zinc-600 text-xs text-center" role="status" aria-live="polite">
+            {!canContinue && !hasSavedPrefs && (
+              <p className="text-zinc-600 text-xs text-center mt-2" role="status" aria-live="polite">
                 Mindestens 2 Namen eingeben
               </p>
-            )}
-
-            {/* Schnellstart für wiederkehrende Nutzende */}
-            {hasSavedPrefs && (
-              <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                onClick={handleQuickStart}
-                className="mt-1 py-2 text-zinc-600 text-xs hover:text-primary transition-colors min-h-[36px]"
-                aria-label="Setup überspringen und mit letzten Einstellungen starten"
-              >
-                Mit letzten Einstellungen starten
-              </motion.button>
             )}
           </motion.div>
         )}
@@ -309,14 +281,16 @@ export const PlayerSetup = ({ onStart, onShowHowToPlay }: Props) => {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 40 }}
-            className="w-full max-w-sm flex flex-col gap-3 px-2"
+            className="w-full max-w-sm flex flex-col px-2"
             role="group"
             aria-labelledby="step-categories-heading"
           >
-            <div className="text-center text-zinc-400 text-xs mb-2" id="step-categories-heading">
+            <StepBar current={stepIndex} total={3} />
+
+            <h2 className="text-white font-bold text-lg text-center mb-1" id="step-categories-heading">
               Welche Musik?
-              <p className="text-zinc-600 text-[10px] mt-0.5">Mehrfachauswahl möglich</p>
-            </div>
+            </h2>
+            <p className="text-zinc-500 text-xs text-center mb-4">Wähle eine oder mehrere Kategorien</p>
 
             <div className="grid grid-cols-2 gap-1.5" role="group" aria-label="Musik-Kategorien auswählen">
               {MUSIC_CATEGORIES.map((cat) => {
@@ -332,7 +306,7 @@ export const PlayerSetup = ({ onStart, onShowHowToPlay }: Props) => {
                     aria-checked={isSelected}
                     aria-label={`${cat.label}: ${description}`}
                     className={`
-                      min-h-[52px] p-3 rounded-lg border text-left transition-all text-sm font-bold
+                      min-h-[56px] p-3 rounded-xl border text-left transition-all text-sm font-bold
                       focus-visible:ring-2 focus-visible:ring-primary/50
                       ${isSelected
                         ? 'border-primary/40 bg-primary/10 text-white'
@@ -352,11 +326,11 @@ export const PlayerSetup = ({ onStart, onShowHowToPlay }: Props) => {
               })}
             </div>
 
-            <div className="flex gap-2 mt-3">
+            <div className="flex gap-2 mt-5">
               <button
                 onClick={() => setStep('players')}
-                aria-label="Zurück zur Spieler:innen-Eingabe"
-                className="flex-1 min-h-[44px] py-2.5 rounded-xl border border-white/10 text-zinc-400 font-bold text-sm hover:border-white/20 hover:text-zinc-300 focus-visible:border-primary transition-colors"
+                aria-label="Zurück"
+                className="flex-1 min-h-[44px] py-2.5 rounded-xl border border-white/10 text-zinc-400 font-bold text-sm hover:border-white/20 hover:text-zinc-300 transition-colors"
               >
                 ZURÜCK
               </button>
@@ -371,12 +345,6 @@ export const PlayerSetup = ({ onStart, onShowHowToPlay }: Props) => {
                 <ChevronRight className="w-4 h-4" aria-hidden="true" />
               </motion.button>
             </div>
-
-            {!canStart && (
-              <p className="text-zinc-600 text-xs text-center" role="status" aria-live="polite">
-                Mindestens 1 Kategorie wählen
-              </p>
-            )}
           </motion.div>
         )}
 
@@ -387,13 +355,16 @@ export const PlayerSetup = ({ onStart, onShowHowToPlay }: Props) => {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 40 }}
-            className="w-full max-w-sm flex flex-col gap-3 px-2"
+            className="w-full max-w-sm flex flex-col px-2"
             role="radiogroup"
             aria-labelledby="step-difficulty-heading"
           >
-            <div className="text-center text-zinc-400 text-xs mb-2" id="step-difficulty-heading">
+            <StepBar current={stepIndex} total={3} />
+
+            <h2 className="text-white font-bold text-lg text-center mb-1" id="step-difficulty-heading">
               Schwierigkeit
-            </div>
+            </h2>
+            <p className="text-zinc-500 text-xs text-center mb-4">Wie viel Hörzeit bekommt ihr?</p>
 
             <div className="flex flex-col gap-1.5">
               {DIFFICULTY_LEVELS.map((level) => {
@@ -408,7 +379,7 @@ export const PlayerSetup = ({ onStart, onShowHowToPlay }: Props) => {
                     aria-checked={isSelected}
                     aria-label={`${level.label}: ${level.description}`}
                     className={`
-                      min-h-[52px] p-3.5 rounded-lg border text-left transition-all flex items-center gap-3
+                      min-h-[56px] p-4 rounded-xl border text-left transition-all flex items-center gap-3
                       focus-visible:ring-2 focus-visible:ring-primary/50
                       ${isSelected
                         ? 'border-primary/40 bg-primary/10'
@@ -443,11 +414,11 @@ export const PlayerSetup = ({ onStart, onShowHowToPlay }: Props) => {
               })}
             </div>
 
-            <div className="flex gap-2 mt-3">
+            <div className="flex gap-2 mt-5">
               <button
                 onClick={() => setStep('categories')}
                 aria-label="Zurück zur Musikauswahl"
-                className="flex-1 min-h-[44px] py-2.5 rounded-xl border border-white/10 text-zinc-400 font-bold text-sm hover:border-white/20 hover:text-zinc-300 focus-visible:border-primary transition-colors"
+                className="flex-1 min-h-[44px] py-2.5 rounded-xl border border-white/10 text-zinc-400 font-bold text-sm hover:border-white/20 hover:text-zinc-300 transition-colors"
               >
                 ZURÜCK
               </button>
@@ -455,9 +426,9 @@ export const PlayerSetup = ({ onStart, onShowHowToPlay }: Props) => {
                 whileTap={{ scale: 0.95 }}
                 onClick={handleStartGame}
                 aria-label="Spiel starten"
-                className="flex-[2] bg-primary hover:bg-violet-500 active:bg-violet-700 text-white min-h-[44px] py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-1.5 transition-all focus-visible:ring-4 focus-visible:ring-primary/50"
+                className="flex-[2] bg-primary hover:bg-violet-500 active:bg-violet-700 text-white min-h-[48px] py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all focus-visible:ring-4 focus-visible:ring-primary/50"
               >
-                LOS GEHT'S
+                SPIEL STARTEN
               </motion.button>
             </div>
           </motion.div>
