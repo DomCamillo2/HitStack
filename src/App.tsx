@@ -389,111 +389,173 @@ function App() {
       </div>
 
       {/* ── HUD ── */}
-      <div className="shrink-0 z-20">
-        {/* Glass HUD Card */}
-        <div className="mx-2.5 mt-2 rounded-2xl bg-white/[0.03] backdrop-blur-xl border border-white/[0.06] shadow-lg shadow-black/10 overflow-hidden">
-          {/* Top Row: Logo + Round + Pause */}
-          <div className="px-3.5 pt-2.5 pb-1.5 flex items-center justify-between">
-            {/* Left: HITSTACK Logo */}
-            <button
-              onClick={handleGoHome}
-              aria-label="Zurück zum Startbildschirm"
-              className="flex items-center group focus-visible:ring-2 focus-visible:ring-primary/50 rounded-lg px-1 py-0.5 transition-colors hover:bg-white/5 active:bg-white/10"
-            >
-              <span className="text-sm font-black text-white italic tracking-tight group-hover:text-primary/90 transition-colors">
-                HIT<span className="text-primary">STACK</span>
-              </span>
-            </button>
+      <div className="shrink-0 z-20 px-3 pt-2 pb-1 space-y-2">
 
-            {/* Center: Round info */}
-            <div className="flex items-center gap-2">
-              <span className="text-zinc-400 text-xs font-mono tracking-wide">Song {roundNumber}</span>
-              {isOpenRound && (
-                <span className="px-1.5 py-0.5 rounded-md bg-amber-400/10 text-amber-400 text-[10px] font-bold uppercase border border-amber-400/20">OFFEN</span>
-              )}
-            </div>
+        {/* ── Top Bar ── */}
+        <div className="flex items-center justify-between">
 
-            {/* Right: Pause/Play or spacer */}
-            <div className="min-w-[44px] flex justify-end">
-              {(phase === 'listening' || phase === 'guessing') && (
-                <motion.button
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={togglePause}
-                  aria-label={isPaused ? 'Musik abspielen' : 'Musik pausieren'}
-                  className="flex items-center gap-1.5 px-2.5 min-h-[36px] py-1 rounded-full text-xs font-bold transition-colors focus-visible:ring-2 bg-white/[0.06] border border-white/[0.08] text-zinc-400 hover:text-zinc-200 hover:bg-white/10 focus-visible:ring-primary/50"
-                >
-                  {isPaused ? (
-                    <><Play className="w-3.5 h-3.5" aria-hidden="true" /> Play</>
-                  ) : (
-                    <><Pause className="w-3.5 h-3.5" aria-hidden="true" /> Pause</>
-                  )}
-                </motion.button>
-              )}
+          {/* Left: Logo */}
+          <button
+            onClick={handleGoHome}
+            aria-label="Zurück zum Startbildschirm"
+            className="group flex items-center gap-1 rounded-xl px-2 py-1.5 -ml-2 transition-all hover:bg-white/[0.04] active:scale-95 focus-visible:ring-2 focus-visible:ring-primary/50"
+          >
+            <span className="text-[15px] font-black tracking-tight text-white/90 group-hover:text-white transition-colors">
+              HIT<span className="bg-gradient-to-r from-primary to-violet-400 bg-clip-text text-transparent">STACK</span>
+            </span>
+          </button>
+
+          {/* Center: Round pill */}
+          <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.06]">
+              <span className="text-zinc-500 text-[11px] font-medium">Song</span>
+              <span className="text-white text-[11px] font-bold font-mono tabular-nums">{roundNumber}</span>
             </div>
+            {isOpenRound && (
+              <motion.span
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="px-2 py-1 rounded-full bg-amber-400/10 text-amber-400 text-[10px] font-bold uppercase tracking-wider border border-amber-400/15"
+              >
+                OFFEN
+              </motion.span>
+            )}
           </div>
 
-          {/* Active Player Row */}
-          {activePlayer && (
-            <div className="px-3.5 pb-2.5 flex items-center justify-between border-t border-white/[0.04] pt-2">
-              {/* Left: Avatar + Name + Streak */}
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-primary/15 text-primary text-xs font-bold flex items-center justify-center ring-2 ring-primary/20">
-                  {activePlayer.name.charAt(0).toUpperCase()}
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-white font-bold text-sm leading-tight">{activePlayer.name}</span>
-                  {activePlayer.streak > 1 && (
-                    <span className="text-[10px] font-bold text-primary/70">{activePlayer.streak}× Streak</span>
-                  )}
-                </div>
-              </div>
-
-              {/* Right: Stats */}
-              <div className="flex items-center gap-3">
-                {activePlayer.jokers > 0 && (
-                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-400/10 border border-amber-400/15" title={`${activePlayer.jokers} Joker`}>
-                    <Sparkles className="w-3 h-3 text-amber-400" />
-                    <span className="text-xs font-bold text-amber-400">{activePlayer.jokers}</span>
-                  </div>
+          {/* Right: Pause/Play */}
+          <div className="min-w-[44px] flex justify-end">
+            {(phase === 'listening' || phase === 'guessing') ? (
+              <motion.button
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={togglePause}
+                aria-label={isPaused ? 'Musik abspielen' : 'Musik pausieren'}
+                className={clsx(
+                  "w-9 h-9 rounded-xl flex items-center justify-center transition-all focus-visible:ring-2 focus-visible:ring-primary/50",
+                  isPaused
+                    ? "bg-primary/15 text-primary border border-primary/20 hover:bg-primary/25"
+                    : "bg-white/[0.05] text-zinc-400 border border-white/[0.06] hover:text-white hover:bg-white/[0.08]"
                 )}
-                <span className="text-white font-mono font-black text-lg tabular-nums tracking-tight">{activePlayer.score}</span>
-                <div className="flex gap-0.5">
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <Heart
-                      key={i}
-                      className={clsx(
-                        'w-3.5 h-3.5 transition-colors',
-                        i < activePlayer.lives ? 'text-error fill-error' : 'text-zinc-700/40'
-                      )}
-                    />
-                  ))}
+              >
+                {isPaused ? (
+                  <Play className="w-4 h-4" aria-hidden="true" />
+                ) : (
+                  <Pause className="w-4 h-4" aria-hidden="true" />
+                )}
+              </motion.button>
+            ) : (
+              <div className="w-9" />
+            )}
+          </div>
+        </div>
+
+        {/* ── Active Player Card ── */}
+        {activePlayer && (
+          <motion.div
+            key={activePlayer.name}
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            className="relative rounded-2xl overflow-hidden"
+          >
+            {/* Subtle gradient border */}
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-primary/20 via-violet-500/10 to-primary/20 opacity-60" />
+            <div className="relative m-[1px] rounded-[15px] bg-surface/95 backdrop-blur-xl px-3.5 py-2.5">
+              <div className="flex items-center justify-between">
+
+                {/* Left: Avatar + Name */}
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/25 to-violet-600/20 text-primary text-sm font-bold flex items-center justify-center">
+                      {activePlayer.name.charAt(0).toUpperCase()}
+                    </div>
+                    {activePlayer.streak > 1 && (
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-400 text-[8px] font-black text-black flex items-center justify-center shadow-sm shadow-amber-400/30"
+                      >
+                        {activePlayer.streak}
+                      </motion.div>
+                    )}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-white font-semibold text-sm leading-tight">{activePlayer.name}</span>
+                    {activePlayer.streak > 1 && (
+                      <span className="text-[10px] font-medium text-amber-400/80 leading-tight">
+                        {activePlayer.streak}× Streak 🔥
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right: Score + Lives + Jokers */}
+                <div className="flex items-center gap-2.5">
+                  {activePlayer.jokers > 0 && (
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      className="flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-400/8 border border-amber-400/10"
+                      title={`${activePlayer.jokers} Joker`}
+                    >
+                      <Sparkles className="w-3 h-3 text-amber-400" />
+                      <span className="text-[11px] font-bold text-amber-400 tabular-nums">{activePlayer.jokers}</span>
+                    </motion.div>
+                  )}
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <motion.div
+                        key={i}
+                        initial={false}
+                        animate={{ scale: i < activePlayer.lives ? 1 : 0.8, opacity: i < activePlayer.lives ? 1 : 0.25 }}
+                        transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+                      >
+                        <Heart
+                          className={clsx(
+                            'w-3.5 h-3.5 transition-colors duration-300',
+                            i < activePlayer.lives ? 'text-error fill-error drop-shadow-[0_0_4px_rgba(244,63,94,0.4)]' : 'text-zinc-700'
+                          )}
+                        />
+                      </motion.div>
+                    ))}
+                  </div>
+                  <div className="h-5 w-px bg-white/[0.06]" />
+                  <span className="text-white font-mono font-black text-lg tabular-nums tracking-tight min-w-[28px] text-right">
+                    {activePlayer.score}
+                  </span>
                 </div>
               </div>
             </div>
-          )}
-        </div>
+          </motion.div>
+        )}
 
-        {/* All Players Strip */}
+        {/* ── All Players Strip ── */}
         {players.length > 1 && (
-          <div className="px-3 pt-2 pb-1 flex gap-1.5 overflow-x-auto scrollbar-hide">
+          <div className="flex gap-1 overflow-x-auto scrollbar-hide -mx-1 px-1 pb-0.5">
             {players.map((p, i) => (
-              <div
+              <motion.div
                 key={p.name}
+                layout
                 className={clsx(
-                  "flex items-center gap-1 px-2.5 py-1 rounded-full text-xs shrink-0 transition-all",
+                  "relative flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] shrink-0 transition-all duration-300",
                   i === currentPlayerIndex
-                    ? "bg-primary/15 text-primary font-bold ring-1 ring-primary/25"
+                    ? "bg-primary/12 text-primary font-bold border border-primary/20 shadow-sm shadow-primary/5"
                     : p.lives <= 0
-                    ? "bg-zinc-800/30 text-zinc-600 line-through"
-                    : "bg-white/[0.04] text-zinc-500"
+                    ? "bg-white/[0.02] text-zinc-600 line-through border border-transparent"
+                    : "bg-white/[0.03] text-zinc-500 border border-white/[0.04] hover:bg-white/[0.05]"
                 )}
               >
-                <span className="truncate max-w-[56px]">{p.name}</span>
-                <span className="font-mono font-bold">{p.score}</span>
-                {p.lives <= 0 && <span className="text-[10px] text-zinc-600 ml-0.5">OUT</span>}
-              </div>
+                {i === currentPlayerIndex && (
+                  <motion.div
+                    layoutId="activePlayerIndicator"
+                    className="absolute inset-0 rounded-xl bg-primary/10 border border-primary/20"
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  />
+                )}
+                <span className="relative truncate max-w-[52px]">{p.name}</span>
+                <span className="relative font-mono font-bold tabular-nums">{p.score}</span>
+                {p.lives <= 0 && <span className="relative text-[9px] text-zinc-600">OUT</span>}
+              </motion.div>
             ))}
           </div>
         )}
