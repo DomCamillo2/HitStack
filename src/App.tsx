@@ -470,7 +470,7 @@ function App() {
                       alt=""
                       className={clsx(
                         "w-full h-full object-cover transition-all duration-300",
-                        isPaused ? "brightness-50 scale-100 blur-xl" : "brightness-75 scale-110 blur-xl"
+                        isPaused ? "brightness-50 scale-100 blur-3xl" : "brightness-75 scale-110 blur-3xl"
                       )}
                     />
                   ) : (
