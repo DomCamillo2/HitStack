@@ -301,7 +301,7 @@ export const PlayerSetup = ({ onStart, onShowHowToPlay }: Props) => {
                 className="mt-2 py-2 text-zinc-500 text-xs hover:text-primary transition-colors underline underline-offset-2 min-h-[40px]"
                 aria-label="Setup überspringen und mit letzten Einstellungen starten"
               >
-                ⚡ Mit letzten Einstellungen starten
+                Mit letzten Einstellungen starten
               </motion.button>
             )}
           </motion.div>

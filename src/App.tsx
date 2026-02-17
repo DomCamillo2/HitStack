@@ -55,30 +55,35 @@ function App() {
 
   const activePlayer = players[currentPlayerIndex];
 
-  // ── Zurück zum Startbildschirm ──
-  const handleGoHome = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.src = '';
-      audioRef.current = null;
-    }
-    setTimerActive(false);
-    setTimeExpired(false);
-    setIsPaused(false);
+  // ── Zentraler Audio-Stopp (verhindert Overlap) ──
+  const stopAudio = useCallback(() => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+        audioRef.current.load(); // Browser-Puffer freigeben
+      } catch (_) { /* ignore */ }
+      audioRef.current = null;
+    }
+    setTimerActive(false);
+    setIsPaused(false);
+  }, []);
+
+  // ── Zurück zum Startbildschirm ──
+  const handleGoHome = useCallback(() => {
+    stopAudio();
+    setTimeExpired(false);
     reset();
-  };
+  }, [stopAudio, reset]);
 
   // ── Audio direkt im Click-Handler starten (User Gesture!) ──
   const startAudio = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.src = '';
-      audioRef.current = null;
-    }
+    // Altes Audio sofort stoppen (verhindert Overlap)
+    stopAudio();
 
     if (!currentTrack?.previewUrl) {
       console.log('🔇 No preview URL for:', currentTrack?.title);
@@ -89,7 +94,7 @@ function App() {
 
     const audio = new Audio(currentTrack.previewUrl);
     audio.volume = 0.6;
-    audio.loop = true;
+    audio.loop = false; // Kein Loop – Timer bestimmt die Dauer
     audioRef.current = audio;
     setIsPaused(false);
     setTimeExpired(false);
@@ -116,13 +121,9 @@ function App() {
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          // Timer abgelaufen → Audio stoppen
-          if (audioRef.current) {
-            audioRef.current.pause();
-          }
-          setTimerActive(false);
+          // Timer abgelaufen → Audio sofort stoppen & aufräumen
+          stopAudio();
           setTimeExpired(true);
-          if (timerRef.current) clearInterval(timerRef.current);
           return 0;
         }
         return prev - 1;
@@ -132,7 +133,7 @@ function App() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [timerActive, isPaused]);
+  }, [timerActive, isPaused, stopAudio]);
 
   // ── Joker einsetzen → +15 Sekunden ──
   const handleUseJoker = useCallback(() => {
@@ -161,34 +162,19 @@ function App() {
     }
   };
 
-  // ── Stoppe Audio bei Phasen wo kein Sound laufen soll ──
+  // ── Stoppe Audio sofort bei Phasen wo kein Sound laufen soll ──
   useEffect(() => {
     const silentPhases = ['reveal', 'placing', 'gameover', 'pass-phone', 'setup', 'play-button'];
     if (silentPhases.includes(phase)) {
-      // Timer stoppen
-      setTimerActive(false);
+      stopAudio();
       setTimeExpired(false);
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-
-      if (audioRef.current) {
-        const audio = audioRef.current;
-        const fadeOut = setInterval(() => {
-          if (audio.volume > 0.05) {
-            audio.volume = Math.max(0, audio.volume - 0.1);
-          } else {
-            clearInterval(fadeOut);
-            audio.pause();
-            audio.src = '';
-          }
-        }, 50);
-        audioRef.current = null;
-        setIsPaused(false);
-      }
     }
-  }, [phase]);
+  }, [phase, stopAudio]);
+
+  // ── Audio aufräumen beim Unmount ──
+  useEffect(() => {
+    return () => { stopAudio(); };
+  }, [stopAudio]);
 
   // ── Handlers ──────────────────────────────────────────
 
@@ -246,7 +232,7 @@ function App() {
     if (loadError) {
       return (
         <div className="h-[100dvh] bg-background flex flex-col items-center justify-center p-6 text-center gap-4">
-          <p className="text-error text-lg font-bold">⚠️ Fehler</p>
+          <p className="text-error text-lg font-bold">Fehler</p>
           <p className="text-zinc-400 text-sm">{loadError}</p>
           <button
             onClick={() => { setLoadError(null); }}
@@ -281,6 +267,7 @@ function App() {
   // Samsung-style Play Button
   if (phase === 'play-button') {
     return <PlayButton onPlay={() => {
+      stopAudio(); // sicherstellen kein Audio läuft
       startAudio();
       pressPlay();
     }} />;
@@ -344,17 +331,17 @@ function App() {
 
   // ─── MAIN GAME SCREEN ─────────────────────────────────
   return (
-    <div className="h-[100dvh] flex flex-col bg-background overflow-hidden">
+    <div className="h-[100dvh] flex flex-col bg-background overflow-hidden" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
 
       {/* ── COMPACT HUD ── */}
       <div className="shrink-0 z-20">
         {/* Top Bar: Logo (center) + Round + Pause */}
-        <div className="px-4 pt-3 pb-1 flex items-center justify-between">
+        <div className="px-3 pt-2 pb-0.5 flex items-center justify-between">
           {/* Left: round info */}
-          <div className="flex items-center gap-2 min-w-[70px]">
-            <span className="text-zinc-600 text-xs font-mono">Song {roundNumber}</span>
+          <div className="flex items-center gap-1.5 min-w-[60px]">
+            <span className="text-zinc-600 text-[11px] font-mono">Song {roundNumber}</span>
             {isOpenRound && (
-              <span className="text-amber-400 text-[10px] font-black uppercase animate-pulse">⚡</span>
+              <span className="text-amber-400 text-[10px] font-black uppercase animate-pulse">OFFEN</span>
             )}
           </div>
 
@@ -362,15 +349,15 @@ function App() {
           <button
             onClick={handleGoHome}
             aria-label="Zurück zum Startbildschirm"
-            className="flex items-center gap-1 group focus-visible:ring-2 focus-visible:ring-primary/50 rounded-lg px-2 py-1 transition-colors hover:bg-white/5 active:bg-white/10"
+            className="flex items-center gap-1 group focus-visible:ring-2 focus-visible:ring-primary/50 rounded-lg px-1.5 py-0.5 transition-colors hover:bg-white/5 active:bg-white/10"
           >
-            <span className="text-lg font-black text-white italic tracking-tight group-hover:text-primary/90 transition-colors">
+            <span className="text-base font-black text-white italic tracking-tight group-hover:text-primary/90 transition-colors">
               HIT<span className="text-primary">STACK</span>
             </span>
           </button>
 
           {/* Right: Pause/Play or spacer */}
-          <div className="min-w-[70px] flex justify-end">
+          <div className="min-w-[60px] flex justify-end">
           {(phase === 'listening' || phase === 'guessing') && (
             <motion.button
               initial={{ scale: 0, opacity: 0 }}
@@ -379,7 +366,7 @@ function App() {
               onClick={togglePause}
               aria-label={isPaused ? 'Musik abspielen' : 'Musik pausieren'}
               className={clsx(
-                "flex items-center gap-1.5 px-3 min-h-[36px] py-1.5 rounded-full font-bold text-xs transition-colors focus-visible:ring-2",
+                "flex items-center gap-1 px-2.5 min-h-[32px] py-1 rounded-full font-bold text-[11px] transition-colors focus-visible:ring-2",
                 isPaused
                   ? "bg-success/20 text-success border-2 border-success/40 focus-visible:ring-success/50"
                   : "bg-error/15 text-error border-2 border-error/30 focus-visible:ring-error/50"
@@ -397,30 +384,30 @@ function App() {
 
         {/* Active Player Card */}
         {activePlayer && (
-          <div className="px-4 pb-2">
-            <div className="flex items-center justify-between bg-surface/60 backdrop-blur-sm rounded-xl px-3 py-2 border border-white/5">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-primary/20 text-primary text-xs font-black flex items-center justify-center">
+          <div className="px-3 pb-1">
+            <div className="flex items-center justify-between bg-surface/60 backdrop-blur-sm rounded-lg px-2.5 py-1.5 border border-white/5">
+              <div className="flex items-center gap-1.5">
+                <div className="w-6 h-6 rounded-full bg-primary/20 text-primary text-[10px] font-black flex items-center justify-center">
                   {activePlayer.name.charAt(0).toUpperCase()}
                 </div>
-                <span className="text-white font-bold text-sm">{activePlayer.name}</span>
+                <span className="text-white font-bold text-xs">{activePlayer.name}</span>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 {activePlayer.streak > 1 && (
-                  <span className="text-xs font-bold text-primary animate-pulse">🔥{activePlayer.streak}</span>
+                  <span className="text-[11px] font-bold text-primary animate-pulse">{activePlayer.streak}x Streak</span>
                 )}
                 {activePlayer.jokers > 0 && (
-                  <span className="text-xs font-bold text-amber-400" title={`${activePlayer.jokers} Joker`}>
+                  <span className="text-[11px] font-bold text-amber-400" title={`${activePlayer.jokers} Joker`}>
                     <Sparkles className="w-3 h-3 inline mr-0.5" />{activePlayer.jokers}
                   </span>
                 )}
-                <span className="text-white font-mono font-bold text-lg tabular-nums">{activePlayer.score}</span>
+                <span className="text-white font-mono font-bold text-base tabular-nums">{activePlayer.score}</span>
                 <div className="flex gap-0.5">
                   {Array.from({ length: 3 }).map((_, i) => (
                     <Heart
                       key={i}
                       className={clsx(
-                        'w-3.5 h-3.5',
+                        'w-3 h-3',
                         i < activePlayer.lives ? 'text-error fill-error' : 'text-zinc-700'
                       )}
                     />
@@ -433,12 +420,12 @@ function App() {
 
         {/* All Players Mini-Bar */}
         {players.length > 1 && (
-          <div className="px-4 pb-2 flex gap-1.5 overflow-x-auto scrollbar-hide">
+          <div className="px-3 pb-1 flex gap-1 overflow-x-auto scrollbar-hide">
             {players.map((p, i) => (
               <div
                 key={p.name}
                 className={clsx(
-                  "flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] shrink-0 transition-colors",
+                  "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] shrink-0 transition-colors",
                   i === currentPlayerIndex
                     ? "bg-primary/20 text-primary font-bold"
                     : p.lives <= 0
@@ -446,9 +433,9 @@ function App() {
                     : "bg-white/5 text-zinc-500"
                 )}
               >
-                <span className="truncate max-w-[50px]">{p.name}</span>
+                <span className="truncate max-w-[40px]">{p.name}</span>
                 <span className="font-mono">{p.score}</span>
-                {p.lives <= 0 && <span className="text-[9px]">💀</span>}
+                {p.lives <= 0 && <span className="text-[9px] text-zinc-600">OUT</span>}
               </div>
             ))}
           </div>
@@ -456,7 +443,7 @@ function App() {
       </div>
 
       {/* MAIN CONTENT AREA */}
-      <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center p-4 pb-8">
+      <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center px-3 py-2 pb-4">
         <AnimatePresence mode="wait">
 
           {/* ── LISTENING PHASE ── */}
@@ -466,12 +453,12 @@ function App() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="flex flex-col items-center gap-6 w-full"
+              className="flex flex-col items-center gap-3 w-full"
             >
               {/* ── COUNTDOWN TIMER ── */}
-              <div className="flex flex-col items-center gap-2">
+              <div className="flex flex-col items-center gap-1">
                 <div className={clsx(
-                  "flex items-center gap-2 px-4 py-2 rounded-full font-mono text-2xl font-black tabular-nums transition-colors",
+                  "flex items-center gap-2 px-3 py-1.5 rounded-full font-mono text-xl font-black tabular-nums transition-colors",
                   timeExpired
                     ? "bg-error/20 text-error border-2 border-error/40"
                     : timeLeft <= 5
@@ -491,7 +478,7 @@ function App() {
                     animate={{ opacity: 1, y: 0 }}
                     className="text-error text-sm font-bold"
                   >
-                    ⏰ Zeit abgelaufen!
+                    Zeit abgelaufen!
                   </motion.p>
                 )}
               </div>
@@ -515,7 +502,7 @@ function App() {
               <motion.button
                 whileTap={{ scale: 0.93 }}
                 onClick={togglePause}
-                className="relative w-36 h-36 rounded-2xl bg-surface border-2 border-primary/30 flex items-center justify-center overflow-hidden cursor-pointer group"
+                className="relative w-28 h-28 sm:w-36 sm:h-36 rounded-2xl bg-surface border-2 border-primary/30 flex items-center justify-center overflow-hidden cursor-pointer group"
               >
                 {currentTrack.coverUrl && (
                   <img src={currentTrack.coverUrl} alt="" className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-30" />
@@ -523,12 +510,12 @@ function App() {
                 <div className="relative flex flex-col items-center gap-2">
                   {isPaused ? (
                     <>
-                      <Play className="w-12 h-12 text-success fill-success/30" />
-                      <span className="text-success text-[10px] font-bold uppercase tracking-wider">Tippe zum Abspielen</span>
+                      <Play className="w-10 h-10 sm:w-12 sm:h-12 text-success fill-success/30" />
+                      <span className="text-success text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">Tippe zum Abspielen</span>
                     </>
                   ) : (
                     <>
-                      <Volume2 className="w-10 h-10 text-primary animate-pulse" />
+                      <Volume2 className="w-8 h-8 sm:w-10 sm:h-10 text-primary animate-pulse" />
                       <div className="flex gap-1">
                         {[0, 1, 2, 3, 4].map((i) => (
                           <motion.div
@@ -550,42 +537,25 @@ function App() {
                 {timeExpired ? 'Die Zeit ist um – entscheide dich!' : isPaused ? 'Pausiert – tippe auf den Player ▶' : 'Hör genau hin…'}
               </p>
 
-              {/* Großer Stop-Button */}
-              {!isPaused && !timeExpired && (
-                <motion.button
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={togglePause}
-                  aria-label="Musik stoppen"
-                  className="flex items-center gap-2 px-5 min-h-[44px] py-2 rounded-full bg-error/15 text-error border-2 border-error/30 text-sm font-bold transition-colors hover:bg-error/25 focus-visible:ring-4 focus-visible:ring-error/50"
-                >
-                  <Pause className="w-4 h-4 fill-error" aria-hidden="true" />
-                  MUSIK STOPPEN
-                </motion.button>
-              )}
-
-              {/* === 3 AUSWAHL-BUTTONS === */}
-              <div className="flex flex-col gap-2 w-full max-w-xs mt-2">
+              {/* === AUSWAHL-BUTTONS === */}
+              <div className="flex flex-col gap-2 w-full max-w-xs">
                 {/* Ich weiß alles → Bonus-Runde (Titel + Artist raten) */}
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={() => goToGuessing()}
                   aria-label="Song erraten und Bonuspunkte sammeln"
-                  className="bg-primary hover:bg-violet-500 active:bg-violet-700 text-white px-6 min-h-[48px] py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary/20 focus-visible:ring-4 focus-visible:ring-primary/50"
+                  className="bg-primary hover:bg-violet-500 active:bg-violet-700 text-white px-5 min-h-[44px] py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary/20 focus-visible:ring-4 focus-visible:ring-primary/50"
                 >
-                  <span className="text-base" aria-hidden="true">🧠</span>
                   ICH WEISS ES! (Bonus)
                 </motion.button>
 
                 {/* Nur einordnen → direkt zur Timeline */}
                 <motion.button
                   whileTap={{ scale: 0.95 }}
-                  onClick={skipToPlacing}
+                  onClick={() => { stopAudio(); skipToPlacing(); }}
                   aria-label="Song nur in der Timeline einordnen"
-                  className="bg-surface hover:bg-zinc-700 active:bg-zinc-600 text-white px-6 min-h-[48px] py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all border-2 border-zinc-600 hover:border-zinc-500 focus-visible:ring-4 focus-visible:ring-primary/50"
+                  className="bg-surface hover:bg-zinc-700 active:bg-zinc-600 text-white px-5 min-h-[44px] py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all border-2 border-zinc-600 hover:border-zinc-500 focus-visible:ring-4 focus-visible:ring-primary/50"
                 >
-                  <span className="text-base" aria-hidden="true">📍</span>
                   NUR JAHR EINORDNEN
                 </motion.button>
 
@@ -596,11 +566,10 @@ function App() {
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.5 }}
                     whileTap={{ scale: 0.97 }}
-                    onClick={skipGuess}
+                    onClick={() => { stopAudio(); skipGuess(); }}
                     aria-label="Keine Ahnung – anderes Team darf raten"
-                    className="min-h-[48px] py-2.5 rounded-xl border-2 border-zinc-600 text-zinc-400 text-xs font-bold flex items-center justify-center gap-2 hover:border-amber-400/50 hover:text-amber-400 focus-visible:border-amber-400 transition-colors"
+                    className="min-h-[44px] py-2 rounded-xl border-2 border-zinc-600 text-zinc-400 text-xs font-bold flex items-center justify-center gap-2 hover:border-amber-400/50 hover:text-amber-400 focus-visible:border-amber-400 transition-colors"
                   >
-                    <span aria-hidden="true">❌</span>
                     KEINE AHNUNG – ANDERES TEAM
                   </motion.button>
                 )}
@@ -618,9 +587,9 @@ function App() {
               className="w-full"
             >
               {/* Timer + Joker im Guessing */}
-              <div className="flex items-center justify-center gap-3 mb-3">
+              <div className="flex items-center justify-center gap-2 mb-2">
                 <div className={clsx(
-                  "flex items-center gap-1.5 px-3 py-1 rounded-full font-mono text-lg font-black tabular-nums",
+                  "flex items-center gap-1.5 px-2.5 py-1 rounded-full font-mono text-base font-black tabular-nums",
                   timeExpired
                     ? "bg-error/20 text-error border border-error/40"
                     : timeLeft <= 5
@@ -629,7 +598,7 @@ function App() {
                     ? "bg-amber-500/15 text-amber-400 border border-amber-400/30"
                     : "bg-primary/10 text-primary border border-primary/30"
                 )}>
-                  <Timer className="w-4 h-4" aria-hidden="true" />
+                  <Timer className="w-3.5 h-3.5" aria-hidden="true" />
                   {timeExpired ? '0:00' : `0:${timeLeft.toString().padStart(2, '0')}`}
                 </div>
 
@@ -638,15 +607,15 @@ function App() {
                     whileTap={{ scale: 0.93 }}
                     onClick={handleUseJoker}
                     aria-label={`Joker einsetzen: ${JOKER_BONUS_SECONDS}s extra`}
-                    className="flex items-center gap-1.5 px-3 min-h-[36px] py-1 rounded-full bg-amber-500/15 text-amber-400 border border-amber-400/40 text-xs font-bold hover:bg-amber-500/25 focus-visible:ring-2 focus-visible:ring-amber-400/50"
+                    className="flex items-center gap-1 px-2.5 min-h-[32px] py-1 rounded-full bg-amber-500/15 text-amber-400 border border-amber-400/40 text-[11px] font-bold hover:bg-amber-500/25 focus-visible:ring-2 focus-visible:ring-amber-400/50"
                   >
-                    <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
+                    <Sparkles className="w-3 h-3" aria-hidden="true" />
                     +{JOKER_BONUS_SECONDS}s · {activePlayer.jokers}×
                   </motion.button>
                 )}
               </div>
 
-              <div className="flex items-center justify-center gap-1 mb-4">
+              <div className="flex items-center justify-center gap-1 mb-3">
                 {!isPaused && !timeExpired && [0, 1, 2].map((i) => (
                   <motion.div
                     key={i}
@@ -655,25 +624,25 @@ function App() {
                     transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.2 }}
                   />
                 ))}
-                <span className="text-zinc-400 text-xs ml-2 font-mono">
-                  {timeExpired ? '⏰ Zeit abgelaufen' : isPaused ? '⏸ Pausiert' : 'Song spielt…'}
+                <span className="text-zinc-400 text-[11px] ml-2 font-mono">
+                  {timeExpired ? 'Zeit abgelaufen' : isPaused ? 'Pausiert' : 'Song spielt…'}
                 </span>
               </div>
 
               <GuessForm
-                onSubmit={submitGuess}
-                onSkip={players.filter(p => p.lives > 0).length > 1 ? skipGuess : undefined}
+                onSubmit={(title, artist) => { stopAudio(); submitGuess(title, artist); }}
+                onSkip={players.filter(p => p.lives > 0).length > 1 ? () => { stopAudio(); skipGuess(); } : undefined}
               />
 
               {/* Musik stoppen/starten Button – nur wenn Timer noch läuft */}
               {!timeExpired && (
-              <div className="flex justify-center mt-4">
+              <div className="flex justify-center mt-3">
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={togglePause}
                   aria-label={isPaused ? 'Musik abspielen' : 'Musik stoppen'}
                   className={clsx(
-                    "flex items-center gap-2 px-5 min-h-[44px] py-2.5 rounded-full text-sm font-bold transition-colors focus-visible:ring-4",
+                    "flex items-center gap-2 px-4 min-h-[40px] py-2 rounded-full text-sm font-bold transition-colors focus-visible:ring-4",
                     isPaused
                       ? "bg-success/15 text-success border-2 border-success/40 hover:bg-success/25 focus-visible:ring-success/50"
                       : "bg-error/15 text-error border-2 border-error/30 hover:bg-error/25 focus-visible:ring-error/50"
@@ -720,15 +689,15 @@ function App() {
 
       {/* TIMELINE PREVIEW – zeigt die Timeline des aktiven Spielers */}
       {myTimeline.length > 0 && phase !== 'placing' && (
-        <div className="shrink-0 border-t border-white/5 bg-background/80 backdrop-blur-md p-3">
-          <div className="text-zinc-500 text-[10px] font-mono uppercase tracking-widest mb-2 text-center">
+        <div className="shrink-0 border-t border-white/5 bg-background/80 backdrop-blur-md px-2 py-1.5">
+          <div className="text-zinc-500 text-[9px] font-mono uppercase tracking-widest mb-1 text-center">
             {activePlayer?.name ?? 'Timeline'} ({myTimeline.length})
           </div>
-          <div className="flex gap-2 overflow-x-auto pb-1 justify-center">
+          <div className="flex gap-1.5 overflow-x-auto pb-0.5 justify-center">
             {myTimeline.map((t) => (
               <div key={t.id} className="flex flex-col items-center shrink-0">
-                <img src={t.coverUrl} alt={t.title} className="w-10 h-10 rounded-lg object-cover border border-white/10" loading="lazy" />
-                <span className="text-primary text-[10px] font-mono mt-0.5">{t.year}</span>
+                <img src={t.coverUrl} alt={t.title} className="w-8 h-8 rounded-md object-cover border border-white/10" loading="lazy" />
+                <span className="text-primary text-[9px] font-mono mt-0.5">{t.year}</span>
               </div>
             ))}
           </div>
@@ -808,7 +777,7 @@ function HowToPlayModal({ open, onClose }: { open: boolean; onClose: () => void 
 
             <section>
               <h3 className="text-white font-bold mb-1 flex items-center gap-2">
-                <span className="text-amber-400">⭐</span> Joker
+                <span className="text-amber-400">4.</span> Joker
               </h3>
               <p>
                 Rätst du <strong className="text-white">Titel UND Interpret</strong> richtig, erhältst du einen 
@@ -819,7 +788,7 @@ function HowToPlayModal({ open, onClose }: { open: boolean; onClose: () => void 
 
             <section>
               <h3 className="text-white font-bold mb-1 flex items-center gap-2">
-                <span className="text-error">💀</span> Spielende
+                <span className="text-error">5.</span> Spielende
               </h3>
               <p>
                 Das Spiel endet, wenn alle Leben aufgebraucht sind oder keine Songs mehr übrig sind. 
