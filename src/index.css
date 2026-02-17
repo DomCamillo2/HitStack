@@ -3,10 +3,15 @@
 @tailwind utilities;
 
 :root {
-  background-color: #09090b;
+  background-color: #111113;
   color: #fff;
   touch-action: none;
   -webkit-tap-highlight-color: transparent;
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 body {

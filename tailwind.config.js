@@ -4,8 +4,8 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#09090b',
-        surface: '#18181b',
+        background: '#111113',
+        surface: '#1a1a1f',
         primary: '#8b5cf6',
         success: '#10b981',
         error: '#f43f5e',
