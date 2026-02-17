@@ -209,35 +209,23 @@ function App() {
   if (phase === 'setup') {
     if (isLoading) {
       return (
-        <div className="h-[100dvh] bg-background flex flex-col items-center justify-center text-primary gap-4" role="status" aria-live="polite" aria-label="Songs werden geladen">
-          <Loader2 className="animate-spin w-10 h-10" />
+        <div className="h-[100dvh] bg-background flex flex-col items-center justify-center text-primary gap-3" role="status" aria-live="polite" aria-label="Songs werden geladen">
+          <Loader2 className="animate-spin w-8 h-8 text-primary/60" />
           <div className="text-center">
-            <p className="text-zinc-300 text-sm font-medium">Songs werden geladen…</p>
-            <p className="text-zinc-500 text-xs mt-1">Das kann einige Sekunden dauern</p>
-          </div>
-          {/* Animated progress dots */}
-          <div className="flex gap-1.5 mt-2">
-            {[0, 1, 2].map((i) => (
-              <motion.div
-                key={i}
-                className="w-2 h-2 rounded-full bg-primary"
-                animate={{ opacity: [0.3, 1, 0.3] }}
-                transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.3 }}
-              />
-            ))}
+            <p className="text-zinc-400 text-xs font-medium">Songs werden geladen</p>
           </div>
         </div>
       );
     }
     if (loadError) {
       return (
-        <div className="h-[100dvh] bg-background flex flex-col items-center justify-center p-6 text-center gap-4">
-          <p className="text-error text-lg font-bold">Fehler</p>
-          <p className="text-zinc-400 text-sm">{loadError}</p>
+        <div className="h-[100dvh] bg-background flex flex-col items-center justify-center p-6 text-center gap-3">
+          <p className="text-error text-sm font-bold">Fehler</p>
+          <p className="text-zinc-500 text-xs">{loadError}</p>
           <button
             onClick={() => { setLoadError(null); }}
             aria-label="Erneut versuchen, Songs zu laden"
-            className="bg-primary hover:bg-violet-500 active:bg-violet-700 text-white px-8 min-h-[48px] py-3 rounded-full font-bold text-sm transition-all active:scale-95 focus-visible:ring-4 focus-visible:ring-primary/50"
+            className="bg-primary hover:bg-violet-500 active:bg-violet-700 text-white px-6 min-h-[44px] py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 focus-visible:ring-4 focus-visible:ring-primary/50"
           >
             NOCHMAL VERSUCHEN
           </button>
@@ -278,53 +266,63 @@ function App() {
     const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
 
     return (
-      <div className="h-[100dvh] bg-background flex flex-col items-center justify-center p-6 text-center space-y-6">
-        <h1 className="text-4xl font-black text-white italic">GAME OVER</h1>
+      <div className="h-[100dvh] bg-background flex flex-col items-center justify-center p-6 text-center space-y-5">
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="flex flex-col items-center gap-1"
+        >
+          <p className="text-zinc-500 text-xs uppercase tracking-[0.2em] font-medium">Ergebnis</p>
+          <h1 className="text-3xl font-black text-white italic">
+            HIT<span className="text-primary">STACK</span>
+          </h1>
+        </motion.div>
 
-        <div className="w-full max-w-sm space-y-2">
+        <div className="w-full max-w-sm space-y-1.5">
           {sortedPlayers.map((player, i) => (
             <motion.div
               key={player.name}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.15 }}
+              transition={{ delay: i * 0.1 }}
               className={clsx(
-                "flex items-center gap-3 p-3 rounded-xl border",
-                i === 0 ? "bg-amber-500/10 border-amber-400/50" : "bg-white/5 border-white/5"
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg border",
+                i === 0 ? "bg-amber-500/5 border-amber-400/30" : "bg-surface border-white/5"
               )}
             >
               <div className={clsx(
-                "w-8 h-8 rounded-full flex items-center justify-center text-sm font-black",
+                "w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0",
                 i === 0 ? "bg-amber-400 text-black" :
                 i === 1 ? "bg-zinc-400 text-black" :
                 i === 2 ? "bg-amber-700 text-white" :
                 "bg-zinc-700 text-zinc-400"
               )}>
-                {i === 0 ? <Crown className="w-4 h-4" /> : i + 1}
+                {i === 0 ? <Crown className="w-3.5 h-3.5" /> : i + 1}
               </div>
-              <span className="text-white font-bold flex-1 text-left">{player.name}</span>
-              <div className="text-right">
-                <span className={clsx(
-                  "font-mono font-bold text-lg",
-                  i === 0 ? "text-amber-400" : "text-primary"
-                )}>
-                  {player.score}
-                </span>
-                <span className="text-zinc-600 text-xs ml-1">Pkt</span>
-              </div>
+              <span className="text-white font-bold text-sm flex-1 text-left">{player.name}</span>
+              <span className={clsx(
+                "font-mono font-bold text-base tabular-nums",
+                i === 0 ? "text-amber-400" : "text-primary"
+              )}>
+                {player.score}
+              </span>
             </motion.div>
           ))}
         </div>
 
-        <p className="text-zinc-500 text-sm">{roundNumber} Runden gespielt</p>
+        <p className="text-zinc-600 text-xs">{roundNumber} Runden gespielt</p>
 
-        <button
+        <motion.button
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          whileTap={{ scale: 0.95 }}
           onClick={handleGoHome}
           aria-label="Neues Spiel starten"
-          className="bg-primary hover:bg-violet-500 active:bg-violet-700 text-white px-8 min-h-[52px] py-4 rounded-full font-bold text-lg transition-all active:scale-95 focus-visible:ring-4 focus-visible:ring-primary/50"
+          className="bg-primary hover:bg-violet-500 active:bg-violet-700 text-white px-8 min-h-[44px] py-3 rounded-xl font-bold text-sm transition-all focus-visible:ring-4 focus-visible:ring-primary/50"
         >
           NOCHMAL SPIELEN
-        </button>
+        </motion.button>
       </div>
     );
   }
@@ -336,12 +334,12 @@ function App() {
       {/* ── COMPACT HUD ── */}
       <div className="shrink-0 z-20">
         {/* Top Bar: Logo (center) + Round + Pause */}
-        <div className="px-3 pt-2 pb-0.5 flex items-center justify-between">
+        <div className="px-3 pt-2 pb-1 flex items-center justify-between">
           {/* Left: round info */}
           <div className="flex items-center gap-1.5 min-w-[60px]">
-            <span className="text-zinc-600 text-[11px] font-mono">Song {roundNumber}</span>
+            <span className="text-zinc-600 text-[10px] font-mono tracking-wide">Song {roundNumber}</span>
             {isOpenRound && (
-              <span className="text-amber-400 text-[10px] font-black uppercase animate-pulse">OFFEN</span>
+              <span className="text-amber-400/80 text-[9px] font-bold uppercase">OFFEN</span>
             )}
           </div>
 
@@ -349,9 +347,9 @@ function App() {
           <button
             onClick={handleGoHome}
             aria-label="Zurück zum Startbildschirm"
-            className="flex items-center gap-1 group focus-visible:ring-2 focus-visible:ring-primary/50 rounded-lg px-1.5 py-0.5 transition-colors hover:bg-white/5 active:bg-white/10"
+            className="flex items-center group focus-visible:ring-2 focus-visible:ring-primary/50 rounded-md px-1.5 py-0.5 transition-colors hover:bg-white/5 active:bg-white/10"
           >
-            <span className="text-base font-black text-white italic tracking-tight group-hover:text-primary/90 transition-colors">
+            <span className="text-sm font-black text-white italic tracking-tight group-hover:text-primary/90 transition-colors">
               HIT<span className="text-primary">STACK</span>
             </span>
           </button>
@@ -365,7 +363,7 @@ function App() {
               whileTap={{ scale: 0.9 }}
               onClick={togglePause}
               aria-label={isPaused ? 'Musik abspielen' : 'Musik pausieren'}
-              className="flex items-center gap-1 px-2 min-h-[28px] py-0.5 rounded-full font-bold text-[10px] transition-colors focus-visible:ring-2 bg-white/5 border border-white/10 text-zinc-400 hover:bg-white/10 focus-visible:ring-primary/50"
+              className="flex items-center gap-1 px-2 min-h-[26px] py-0.5 rounded-full text-[10px] font-medium transition-colors focus-visible:ring-2 bg-white/5 border border-white/10 text-zinc-500 hover:text-zinc-300 hover:bg-white/10 focus-visible:ring-primary/50"
             >
               {isPaused ? (
                 <><Play className="w-3 h-3" aria-hidden="true" /> Play</>
@@ -380,30 +378,30 @@ function App() {
         {/* Active Player Card */}
         {activePlayer && (
           <div className="px-3 pb-1">
-            <div className="flex items-center justify-between bg-surface/60 backdrop-blur-sm rounded-lg px-2.5 py-1.5 border border-white/5">
+            <div className="flex items-center justify-between bg-surface/50 rounded-lg px-2.5 py-1.5 border border-white/5">
               <div className="flex items-center gap-1.5">
-                <div className="w-6 h-6 rounded-full bg-primary/20 text-primary text-[10px] font-black flex items-center justify-center">
+                <div className="w-5 h-5 rounded-full bg-primary/15 text-primary text-[10px] font-bold flex items-center justify-center">
                   {activePlayer.name.charAt(0).toUpperCase()}
                 </div>
                 <span className="text-white font-bold text-xs">{activePlayer.name}</span>
               </div>
               <div className="flex items-center gap-2">
                 {activePlayer.streak > 1 && (
-                  <span className="text-[11px] font-bold text-primary animate-pulse">{activePlayer.streak}x Streak</span>
+                  <span className="text-[10px] font-bold text-primary/80">{activePlayer.streak}x</span>
                 )}
                 {activePlayer.jokers > 0 && (
-                  <span className="text-[11px] font-bold text-amber-400" title={`${activePlayer.jokers} Joker`}>
+                  <span className="text-[10px] font-bold text-amber-400/80" title={`${activePlayer.jokers} Joker`}>
                     <Sparkles className="w-3 h-3 inline mr-0.5" />{activePlayer.jokers}
                   </span>
                 )}
-                <span className="text-white font-mono font-bold text-base tabular-nums">{activePlayer.score}</span>
+                <span className="text-white font-mono font-bold text-sm tabular-nums">{activePlayer.score}</span>
                 <div className="flex gap-0.5">
                   {Array.from({ length: 3 }).map((_, i) => (
                     <Heart
                       key={i}
                       className={clsx(
-                        'w-3 h-3',
-                        i < activePlayer.lives ? 'text-error fill-error' : 'text-zinc-700'
+                        'w-2.5 h-2.5',
+                        i < activePlayer.lives ? 'text-error fill-error' : 'text-zinc-700/50'
                       )}
                     />
                   ))}
@@ -422,15 +420,15 @@ function App() {
                 className={clsx(
                   "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] shrink-0 transition-colors",
                   i === currentPlayerIndex
-                    ? "bg-primary/20 text-primary font-bold"
+                    ? "bg-primary/10 text-primary font-bold"
                     : p.lives <= 0
-                    ? "bg-zinc-800/30 text-zinc-700 line-through"
-                    : "bg-white/5 text-zinc-500"
+                    ? "bg-zinc-800/20 text-zinc-700 line-through"
+                    : "bg-white/5 text-zinc-600"
                 )}
               >
                 <span className="truncate max-w-[40px]">{p.name}</span>
                 <span className="font-mono">{p.score}</span>
-                {p.lives <= 0 && <span className="text-[9px] text-zinc-600">OUT</span>}
+                {p.lives <= 0 && <span className="text-[9px] text-zinc-700">OUT</span>}
               </div>
             ))}
           </div>
@@ -711,15 +709,15 @@ function App() {
 
       {/* TIMELINE PREVIEW – zeigt die Timeline des aktiven Spielers */}
       {myTimeline.length > 0 && phase !== 'placing' && (
-        <div className="shrink-0 border-t border-white/5 bg-background/80 backdrop-blur-md px-2 py-1.5">
-          <div className="text-zinc-500 text-[9px] font-mono uppercase tracking-widest mb-1 text-center">
-            {activePlayer?.name ?? 'Timeline'} ({myTimeline.length})
+        <div className="shrink-0 border-t border-white/5 bg-surface/30 px-2 py-1.5">
+          <div className="text-zinc-600 text-[9px] font-mono uppercase tracking-wider mb-1 text-center">
+            {activePlayer?.name ?? 'Timeline'} · {myTimeline.length}
           </div>
-          <div className="flex gap-1.5 overflow-x-auto pb-0.5 justify-center">
+          <div className="flex gap-1.5 overflow-x-auto pb-0.5 justify-center scrollbar-hide">
             {myTimeline.map((t) => (
               <div key={t.id} className="flex flex-col items-center shrink-0">
-                <img src={t.coverUrl} alt={t.title} className="w-8 h-8 rounded-md object-cover border border-white/10" loading="lazy" />
-                <span className="text-primary text-[9px] font-mono mt-0.5">{t.year}</span>
+                <img src={t.coverUrl} alt={t.title} className="w-7 h-7 rounded object-cover border border-white/5" loading="lazy" />
+                <span className="text-primary/70 text-[8px] font-mono mt-0.5">{t.year}</span>
               </div>
             ))}
           </div>
@@ -741,89 +739,85 @@ function HowToPlayModal({ open, onClose }: { open: boolean; onClose: () => void 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       >
         <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
+          initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
+          exit={{ scale: 0.95, opacity: 0 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-surface border border-white/10 rounded-2xl p-6 w-full max-w-md max-h-[80dvh] overflow-y-auto shadow-2xl"
+          className="bg-surface border border-white/10 rounded-2xl p-5 w-full max-w-md max-h-[80dvh] overflow-y-auto"
         >
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-black text-white italic">
-              So geht HIT<span className="text-primary">STACK</span>
+            <h2 className="text-lg font-black text-white italic">
+              HIT<span className="text-primary">STACK</span>
             </h2>
             <button
               onClick={onClose}
               aria-label="Schließen"
-              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
+              className="w-7 h-7 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-colors"
             >
-              ✕
+              <span className="text-xs">✕</span>
             </button>
           </div>
 
-          <div className="space-y-4 text-sm text-zinc-300 leading-relaxed">
-            <section>
-              <h3 className="text-white font-bold mb-1 flex items-center gap-2">
-                <span className="text-primary">1.</span> Song anhören
+          <div className="space-y-3 text-sm text-zinc-400 leading-relaxed">
+            <section className="bg-white/5 rounded-lg p-3">
+              <h3 className="text-white font-bold text-xs mb-1 flex items-center gap-2">
+                <span className="text-primary text-xs font-mono">01</span> Song anhören
               </h3>
-              <p>
-                Ein Song wird abgespielt. Du hast je nach Schwierigkeitsgrad <strong className="text-white">20–30 Sekunden</strong> 
-                zum Zuhören. Der Countdown zeigt die verbleibende Zeit.
+              <p className="text-xs">
+                Ein Song wird abgespielt. Je nach Level hast du <span className="text-white">20–30 Sekunden</span> zum Zuhören.
               </p>
             </section>
 
-            <section>
-              <h3 className="text-white font-bold mb-1 flex items-center gap-2">
-                <span className="text-primary">2.</span> Raten (Bonus)
+            <section className="bg-white/5 rounded-lg p-3">
+              <h3 className="text-white font-bold text-xs mb-1 flex items-center gap-2">
+                <span className="text-primary text-xs font-mono">02</span> Raten (Bonus)
               </h3>
-              <p>
-                Wenn du den Song erkennst, kannst du <strong className="text-white">Titel</strong> und/oder <strong className="text-white">Interpret</strong> raten.
-                Je richtigem Feld gibt es <strong className="text-primary">+50 Bonuspunkte</strong>. 
-                Du kannst auch direkt zum Einordnen springen.
+              <p className="text-xs">
+                Erkennst du den Song? Rate <span className="text-white">Titel</span> und/oder <span className="text-white">Interpret</span> für 
+                je <span className="text-primary">+50 Bonuspunkte</span>.
               </p>
             </section>
 
-            <section>
-              <h3 className="text-white font-bold mb-1 flex items-center gap-2">
-                <span className="text-primary">3.</span> Timeline einordnen
+            <section className="bg-white/5 rounded-lg p-3">
+              <h3 className="text-white font-bold text-xs mb-1 flex items-center gap-2">
+                <span className="text-primary text-xs font-mono">03</span> Timeline einordnen
               </h3>
-              <p>
-                Ordne den Song chronologisch in deine Timeline ein. 
-                Richtig eingeordnet gibt <strong className="text-primary">+75 Punkte</strong>. 
-                Falsch? Du verlierst ein <span className="text-error">❤️ Leben</span>.
+              <p className="text-xs">
+                Ordne den Song chronologisch ein. 
+                Richtig = <span className="text-primary">+75 Punkte</span>. 
+                Falsch = <span className="text-error">-1 Leben</span>.
               </p>
             </section>
 
-            <section>
-              <h3 className="text-white font-bold mb-1 flex items-center gap-2">
-                <span className="text-amber-400">4.</span> Joker
+            <section className="bg-white/5 rounded-lg p-3">
+              <h3 className="text-white font-bold text-xs mb-1 flex items-center gap-2">
+                <span className="text-amber-400 text-xs font-mono">04</span> Joker
               </h3>
-              <p>
-                Rätst du <strong className="text-white">Titel UND Interpret</strong> richtig, erhältst du einen 
-                <strong className="text-amber-400"> Joker</strong>. Damit kannst du dir <strong className="text-white">+15 Sekunden</strong> Extra-Hörzeit 
-                erkaufen!
+              <p className="text-xs">
+                Titel UND Interpret richtig = <span className="text-amber-400">Joker</span>. 
+                Damit bekommst du <span className="text-white">+15 Sekunden</span> Extra-Hörzeit.
               </p>
             </section>
 
-            <section>
-              <h3 className="text-white font-bold mb-1 flex items-center gap-2">
-                <span className="text-error">5.</span> Spielende
+            <section className="bg-white/5 rounded-lg p-3">
+              <h3 className="text-white font-bold text-xs mb-1 flex items-center gap-2">
+                <span className="text-zinc-500 text-xs font-mono">05</span> Spielende
               </h3>
-              <p>
-                Das Spiel endet, wenn alle Leben aufgebraucht sind oder keine Songs mehr übrig sind. 
-                Wer die meisten Punkte hat, gewinnt!
+              <p className="text-xs">
+                Keine Leben mehr oder keine Songs? Wer die meisten Punkte hat, gewinnt.
               </p>
             </section>
           </div>
 
           <button
             onClick={onClose}
-            className="mt-6 w-full bg-primary hover:bg-violet-500 active:bg-violet-700 text-white min-h-[48px] py-3 rounded-xl font-bold text-sm transition-all active:scale-95 focus-visible:ring-4 focus-visible:ring-primary/50"
+            className="mt-4 w-full bg-primary hover:bg-violet-500 active:bg-violet-700 text-white min-h-[44px] py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 focus-visible:ring-4 focus-visible:ring-primary/50"
           >
-            VERSTANDEN!
+            VERSTANDEN
           </button>
         </motion.div>
       </motion.div>

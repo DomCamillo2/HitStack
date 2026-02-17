@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import type { Track } from '../store/gameStore';
 import { clsx } from 'clsx';
-import { ChevronDown } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 interface Props {
   timeline: Track[];
@@ -18,25 +18,30 @@ export const TimelinePlacement = ({ timeline, currentTrack, onPlace }: Props) =>
     >
       {/* Header */}
       <div className="text-center mb-2">
-        <p className="text-primary text-sm font-bold uppercase tracking-widest">Wo gehört der Song hin?</p>
-        <p className="text-zinc-400 text-xs mt-1">
-          <span className="text-white font-bold">{currentTrack.title}</span> – {currentTrack.artist} ({currentTrack.year})
-        </p>
+        <p className="text-primary text-xs font-bold uppercase tracking-wider">Wo gehört der Song hin?</p>
+        <div className="flex items-center justify-center gap-2 mt-1.5">
+          {currentTrack.coverUrl && (
+            <img src={currentTrack.coverUrl} alt="" className="w-6 h-6 rounded object-cover" />
+          )}
+          <p className="text-zinc-400 text-xs">
+            <span className="text-white font-bold">{currentTrack.title}</span> – {currentTrack.artist}
+          </p>
+        </div>
       </div>
 
       {/* Timeline mit Insert-Buttons */}
       <div className="flex flex-col gap-1">
         {/* Insert Button: Ganz oben (ältester) */}
         <InsertButton
-          label="↑ Hier einfügen (ältester)"
+          label="Hier einfügen (ältester)"
           onClick={() => onPlace(0)}
         />
 
         {timeline.map((track, i) => (
           <div key={track.id} className="flex flex-col gap-1">
             {/* Timeline Card */}
-            <div className="flex items-center p-2 rounded-xl gap-3 bg-white/5 border border-white/5">
-              <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-zinc-800">
+            <div className="flex items-center p-2 rounded-lg gap-3 bg-surface border border-white/5">
+              <div className="w-9 h-9 rounded-md overflow-hidden shrink-0 bg-zinc-800">
                 <img
                   src={track.coverUrl}
                   alt={track.title}
@@ -54,8 +59,8 @@ export const TimelinePlacement = ({ timeline, currentTrack, onPlace }: Props) =>
             {/* Insert Button: Nach dieser Karte */}
             <InsertButton
               label={i < timeline.length - 1
-                ? `↓ Zwischen ${track.year} und ${timeline[i + 1].year}`
-                : '↓ Hier einfügen (neuester)'
+                ? `Zwischen ${track.year} und ${timeline[i + 1].year}`
+                : 'Hier einfügen (neuester)'
               }
               onClick={() => onPlace(i + 1)}
             />
@@ -73,15 +78,15 @@ function InsertButton({ label, onClick }: { label: string; onClick: () => void }
       onClick={onClick}
       aria-label={label}
       className={clsx(
-        "w-full min-h-[44px] py-2.5 px-4 rounded-lg border-2 border-dashed border-primary/40",
-        "text-primary/70 text-xs font-mono",
-        "hover:border-primary hover:text-primary hover:bg-primary/5",
+        "w-full min-h-[40px] py-2 px-3 rounded-lg border border-dashed border-white/10",
+        "text-zinc-500 text-[11px] font-medium",
+        "hover:border-primary/40 hover:text-primary hover:bg-primary/5",
         "active:bg-primary/10 transition-all",
         "focus-visible:ring-2 focus-visible:ring-primary/50",
-        "flex items-center justify-center gap-1"
+        "flex items-center justify-center gap-1.5"
       )}
     >
-      <ChevronDown className="w-3 h-3" aria-hidden="true" />
+      <Plus className="w-3 h-3" aria-hidden="true" />
       {label}
     </motion.button>
   );
