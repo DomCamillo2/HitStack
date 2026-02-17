@@ -8,7 +8,7 @@ import { PlayButton } from './components/PlayButton';
 import { GuessForm } from './components/GuessForm';
 import { TimelinePlacement } from './components/TimelinePlacement';
 import { RevealCard } from './components/RevealCard';
-import { Loader2, Heart, Crown, Pause, Play, Sparkles } from 'lucide-react';
+import { Loader2, Heart, Crown, Pause, Play, Sparkles, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
 
@@ -209,23 +209,40 @@ function App() {
   if (phase === 'setup') {
     if (isLoading) {
       return (
-        <div className="h-[100dvh] bg-background flex flex-col items-center justify-center text-primary gap-3" role="status" aria-live="polite" aria-label="Songs werden geladen">
-          <Loader2 className="animate-spin w-8 h-8 text-primary/60" />
-          <div className="text-center">
-            <p className="text-zinc-400 text-xs font-medium">Songs werden geladen</p>
+        <div className="h-[100dvh] bg-background flex flex-col items-center justify-center gap-4 relative overflow-hidden" role="status" aria-live="polite" aria-label="Songs werden geladen">
+          <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+            <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-64 h-64 bg-primary/4 rounded-full blur-3xl" />
+          </div>
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="relative w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center"
+          >
+            <Loader2 className="animate-spin w-6 h-6 text-primary" />
+          </motion.div>
+          <div className="relative text-center">
+            <h1 className="text-xl font-black text-white italic mb-1">
+              HIT<span className="text-primary">STACK</span>
+            </h1>
+            <p className="text-zinc-500 text-xs">Songs werden geladen…</p>
           </div>
         </div>
       );
     }
     if (loadError) {
       return (
-        <div className="h-[100dvh] bg-background flex flex-col items-center justify-center p-6 text-center gap-3">
-          <p className="text-error text-sm font-bold">Fehler</p>
-          <p className="text-zinc-500 text-xs">{loadError}</p>
+        <div className="h-[100dvh] bg-background flex flex-col items-center justify-center p-6 text-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-error/10 border border-error/20 flex items-center justify-center">
+            <X className="w-6 h-6 text-error" />
+          </div>
+          <div>
+            <p className="text-white text-sm font-bold mb-1">Etwas ist schiefgelaufen</p>
+            <p className="text-zinc-500 text-xs max-w-[260px]">{loadError}</p>
+          </div>
           <button
             onClick={() => { setLoadError(null); }}
             aria-label="Erneut versuchen, Songs zu laden"
-            className="bg-primary hover:bg-violet-500 active:bg-violet-700 text-white px-6 min-h-[44px] py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 focus-visible:ring-4 focus-visible:ring-primary/50"
+            className="bg-primary hover:bg-violet-500 active:bg-violet-700 text-white px-8 min-h-[44px] py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 focus-visible:ring-4 focus-visible:ring-primary/50 shadow-lg shadow-primary/20"
           >
             NOCHMAL VERSUCHEN
           </button>
@@ -252,42 +269,59 @@ function App() {
     );
   }
 
-  // Samsung-style Play Button
+  // Play Button with player context
   if (phase === 'play-button') {
-    return <PlayButton onPlay={() => {
-      stopAudio(); // sicherstellen kein Audio läuft
-      startAudio();
-      pressPlay();
-    }} />;
+    return <PlayButton
+      onPlay={() => {
+        stopAudio(); // sicherstellen kein Audio läuft
+        startAudio();
+        pressPlay();
+      }}
+      playerName={activePlayer?.name}
+      roundNumber={roundNumber}
+    />;
   }
 
   // Game Over
   if (phase === 'gameover') {
     const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+    const winner = sortedPlayers[0];
 
     return (
-      <div className="h-[100dvh] bg-background flex flex-col items-center justify-center p-6 text-center space-y-5">
+      <div className="h-[100dvh] bg-background flex flex-col items-center justify-center p-6 text-center relative overflow-hidden">
+        {/* Ambient celebration glow */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-80 h-80 bg-amber-400/5 rounded-full blur-3xl" />
+        </div>
+
+        {/* Winner celebration */}
         <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="flex flex-col items-center gap-1"
+          initial={{ scale: 0, rotate: -10 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ type: 'spring', damping: 12 }}
+          className="relative flex flex-col items-center gap-3 mb-6"
         >
-          <p className="text-zinc-500 text-xs uppercase tracking-[0.2em] font-medium">Ergebnis</p>
-          <h1 className="text-3xl font-black text-white italic">
-            HIT<span className="text-primary">STACK</span>
-          </h1>
+          <div className="w-16 h-16 rounded-full bg-amber-400/10 border-2 border-amber-400/30 flex items-center justify-center shadow-lg shadow-amber-400/10">
+            <Crown className="w-7 h-7 text-amber-400" />
+          </div>
+          <div>
+            <p className="text-zinc-500 text-[10px] uppercase tracking-[0.3em] font-mono">Gewinner</p>
+            <h2 className="text-2xl font-black text-white mt-0.5">{winner.name}</h2>
+            <p className="text-amber-400 font-mono font-bold text-lg">{winner.score} Punkte</p>
+          </div>
         </motion.div>
 
-        <div className="w-full max-w-sm space-y-1.5">
+        {/* Leaderboard */}
+        <div className="w-full max-w-sm space-y-1.5 relative mb-5">
           {sortedPlayers.map((player, i) => (
             <motion.div
               key={player.name}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.1 }}
+              transition={{ delay: 0.2 + i * 0.1 }}
               className={clsx(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg border",
-                i === 0 ? "bg-amber-500/5 border-amber-400/30" : "bg-surface border-white/5"
+                "flex items-center gap-3 px-3.5 py-2.5 rounded-xl border",
+                i === 0 ? "bg-amber-500/5 border-amber-400/20" : "bg-surface border-white/5"
               )}
             >
               <div className={clsx(
@@ -297,7 +331,7 @@ function App() {
                 i === 2 ? "bg-amber-700 text-white" :
                 "bg-zinc-700 text-zinc-400"
               )}>
-                {i === 0 ? <Crown className="w-3.5 h-3.5" /> : i + 1}
+                {i + 1}
               </div>
               <span className="text-white font-bold text-sm flex-1 text-left">{player.name}</span>
               <span className={clsx(
@@ -310,16 +344,23 @@ function App() {
           ))}
         </div>
 
-        <p className="text-zinc-600 text-xs">{roundNumber} Runden gespielt</p>
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="text-zinc-600 text-xs relative mb-5"
+        >
+          {roundNumber} Songs gespielt
+        </motion.p>
 
         <motion.button
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.6 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleGoHome}
           aria-label="Neues Spiel starten"
-          className="bg-primary hover:bg-violet-500 active:bg-violet-700 text-white px-8 min-h-[44px] py-3 rounded-xl font-bold text-sm transition-all focus-visible:ring-4 focus-visible:ring-primary/50"
+          className="relative bg-primary hover:bg-violet-500 active:bg-violet-700 text-white px-10 min-h-[48px] py-3 rounded-xl font-bold text-sm transition-all focus-visible:ring-4 focus-visible:ring-primary/50 shadow-lg shadow-primary/20"
         >
           NOCHMAL SPIELEN
         </motion.button>
